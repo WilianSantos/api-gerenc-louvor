@@ -10,6 +10,7 @@ markdown = "*"
 python-dotenv = "*"
 mysqlclient = "*"
 djangorestframework-simplejwt = "*"
+pillow = "*"
 
 [dev-packages]
 

@@ -8,12 +8,14 @@ from rest_framework_simplejwt.views import (
 
 from rest_framework import routers
 
-from apps.user.views import UserViewSet
+from apps.accounts.views import UserViewSet, MemberViewSet, MemberFunctionViewSet
 
 router = routers.DefaultRouter()
 
-# Rotas de User
-router.register('user', UserViewSet, basename='Usuario')
+# Rotas de accounts
+router.register('api/user', UserViewSet, basename='Usuario')
+router.register('api/member', MemberViewSet, basename='Membro')
+router.register('api/member-function', MemberFunctionViewSet, basename='Função')
 
 urlpatterns = [
     path('', include(router.urls)),

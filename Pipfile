@@ -9,6 +9,7 @@ djangorestframework = "*"
 markdown = "*"
 python-dotenv = "*"
 mysqlclient = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 

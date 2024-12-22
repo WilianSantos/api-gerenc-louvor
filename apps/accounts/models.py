@@ -4,11 +4,11 @@ from django.contrib.auth.models import User
 
 # BD - Funçao do membro da igreja
 class MemberFunction(models.Model):
-    name = models.CharField(max_length=100, blank=False) #TODO adicionar propriedade unique=True e alterar o nome do campo para function_name
+    function_name = models.CharField(max_length=100, blank=False, unique=True) #TODO adicionar propriedade unique=True e alterar o nome do campo para function_name
 
 
     def __str__(self):
-        return self.name
+        return self.function_name
 
 
 class Member(models.Model):

@@ -25,11 +25,11 @@ admin.site.register(MusicVersion, MusicVersionAdmin)
 
 
 class MusicCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    list_display_links = ('name',)
-    search_fields = ('name',)
-    list_filter = ('name',)
+    list_display = ('category_name',)
+    list_display_links = ('category_name',)
+    search_fields = ('category_name',)
+    list_filter = ('category_name',)
     list_per_page = 10
-    ordering = ('name',)
+    ordering = ('category_name',)
 
 admin.site.register(MusicCategory, MusicCategoryAdmin)

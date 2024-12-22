@@ -20,8 +20,8 @@ class MusicCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = MusicCategorySerializers
 
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    ordering_fields = ['name']
-    search_fields = ['name']
+    ordering_fields = ['category_name']
+    search_fields = ['category_name']
 
 
 class MusicVersionViewSet(viewsets.ModelViewSet):

@@ -4,10 +4,10 @@ from tinymce.models import HTMLField
 
 
 class MusicCategory(models.Model):
-    name = models.CharField(max_length=50, null=False, blank=False, unique=True) #TODO alterar para category_name
+    category_name = models.CharField(max_length=50, null=False, blank=False, unique=True) #TODO alterar para category_name
 
     def __str__(self) -> str:
-        return self.name
+        return self.category_name
     
 
 class Music(models.Model):

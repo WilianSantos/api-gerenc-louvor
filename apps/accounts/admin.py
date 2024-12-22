@@ -4,12 +4,12 @@ from .models import Member, MemberFunction
 
 
 class MemberFunctionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name',)
-    list_display_links = ('id', 'name',)
-    search_fields = ('name',)
-    list_filter = ('name',)
+    list_display = ('id', 'function_name',)
+    list_display_links = ('id', 'function_name',)
+    search_fields = ('function_name',)
+    list_filter = ('function_name',)
     list_per_page = 10
-    ordering = ('name',)
+    ordering = ('function_name',)
 
 admin.site.register(MemberFunction, MemberFunctionAdmin)
 

@@ -8,6 +8,7 @@ from rest_framework import routers
 from apps.accounts.views import UserViewSet, MemberViewSet, MemberFunctionViewSet
 from apps.music.views import MusicViewSet, MusicCategoryViewSet, MusicVersionViewSet
 from apps.playlist.views import PlaylistViewSet
+from apps.lineup.views import PraiseLineupViewSet
 
 router = routers.DefaultRouter()
 
@@ -23,6 +24,9 @@ router.register('music', MusicVersionViewSet, basename='Versões da música')
 
 # Rotas de playlist
 router.register('playlist', PlaylistViewSet, basename='Playlist')
+
+# Rotas de lineup
+router.register('praise-lineup', PraiseLineupViewSet, basename='Escalação do louvor')
 
 urlpatterns = [
     path('api/praise/', include(router.urls)),

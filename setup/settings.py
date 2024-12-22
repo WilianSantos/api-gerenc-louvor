@@ -171,6 +171,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '3/min',  # Limita 3 requisições por minuto para usuários anônimos
+        'user': '1000/day',  # Limita 1000 requisições por dia para usuários autenticados
+    }
 }
 
 

@@ -49,10 +49,10 @@ INSTALLED_APPS = [
     
     'rest_framework',
     'rest_framework_simplejwt',
+    'tinymce',
 
     'apps.accounts',
     'apps.music',
-
 ]
 
 MIDDLEWARE = [
@@ -160,3 +160,12 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
 }
+
+# Configurações do tinymce
+TINYMCE_JS_URL = os.path.join(STATIC_URL, str(os.getenv('TINYMCE_URL')))
+TINYMCE_DEFAULT_CONFIG = {
+    "plugins": "anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount",
+    "toolbar": "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat",
+}
+TINYMCE_SPELLCHECKER = True
+TINYMCE_COMPRESSOR = True

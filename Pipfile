@@ -11,6 +11,7 @@ python-dotenv = "*"
 mysqlclient = "*"
 djangorestframework-simplejwt = "*"
 pillow = "*"
+django-tinymce = "*"
 
 [dev-packages]
 

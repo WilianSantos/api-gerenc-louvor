@@ -1,14 +1,20 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from rest_framework import routers
 
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
 from apps.accounts.views import UserViewSet, MemberViewSet
 from apps.music.views import MusicViewSet, MusicCategoryViewSet, MusicVersionViewSet
 from apps.playlist.views import PlaylistViewSet
 from apps.lineup.views import PraiseLineupViewSet
+
 
 router = routers.DefaultRouter()
 
@@ -27,6 +33,7 @@ router.register('playlist', PlaylistViewSet, basename='Playlist')
 # Rotas de lineup
 router.register('praise-lineup', PraiseLineupViewSet, basename='Escalação do louvor')
 
+
 urlpatterns = [
     path('api/praise/', include(router.urls)),
 
@@ -38,4 +45,5 @@ urlpatterns = [
 
     #rota tinymce
     path('tinymce/', include('tinymce.urls')),
-]
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

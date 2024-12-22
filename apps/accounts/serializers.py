@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from .models import Member, MemberFunction
+from .models import Member
 
 from rest_framework import serializers
 
@@ -21,8 +21,3 @@ class MemberSerializers(serializers.ModelSerializer):
         model = Member
         fields = '__all__'
         
-
-class MemberFunctionSerializers(serializers.ModelSerializer):
-    class Meta:
-        model = MemberFunction
-        fields = '__all__'

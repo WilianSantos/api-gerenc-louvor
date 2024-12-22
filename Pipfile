@@ -13,6 +13,7 @@ djangorestframework-simplejwt = "*"
 pillow = "*"
 django-tinymce = "*"
 django-filter = "*"
+django-redis = "*"
 
 [dev-packages]
 

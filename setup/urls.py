@@ -7,9 +7,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from rest_framework import routers
 
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
-
 from apps.accounts.views import UserViewSet, MemberViewSet
 from apps.music.views import MusicViewSet, MusicCategoryViewSet, MusicVersionViewSet
 from apps.playlist.views import PlaylistViewSet
@@ -45,5 +42,8 @@ urlpatterns = [
 
     #rota tinymce
     path('tinymce/', include('tinymce.urls')),
+
+    # rotas do django-activity-stream
+    path('activity/', include('actstream.urls')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

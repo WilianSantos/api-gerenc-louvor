@@ -12,6 +12,7 @@ mysqlclient = "*"
 djangorestframework-simplejwt = "*"
 pillow = "*"
 django-tinymce = "*"
+django-filter = "*"
 
 [dev-packages]
 

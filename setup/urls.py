@@ -1,14 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
 
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from rest_framework import routers
 
 from apps.accounts.views import UserViewSet, MemberViewSet, MemberFunctionViewSet
+from apps.music.views import MusicViewSet, MusicCategoryViewSet, MusicVersionViewSet
 
 router = routers.DefaultRouter()
 
@@ -16,6 +14,11 @@ router = routers.DefaultRouter()
 router.register('api/user', UserViewSet, basename='Usuario')
 router.register('api/member', MemberViewSet, basename='Membro')
 router.register('api/member-function', MemberFunctionViewSet, basename='Função')
+
+# Rotas de music
+router.register('api/music', MusicViewSet, basename='Música')
+router.register('api/music', MusicCategoryViewSet, basename='Categoria da música')
+router.register('api/music', MusicVersionViewSet, basename='Versões da música')
 
 urlpatterns = [
     path('', include(router.urls)),

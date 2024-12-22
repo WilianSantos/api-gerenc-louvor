@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 # BD - Funçao do membro da igreja
 class MemberFunction(models.Model):
-    name = models.CharField(max_length=100, blank=False) #TODO adicionar propriedade unique=True
+    name = models.CharField(max_length=100, blank=False) #TODO adicionar propriedade unique=True e alterar o nome do campo para function_name
 
 
     def __str__(self):

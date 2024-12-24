@@ -5,7 +5,10 @@ from django.conf.urls.static import static
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from rest_framework import routers
+from rest_framework import routers, permissions
+
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 from apps.accounts.views import UserViewSet, MemberViewSet
 from apps.music.views import MusicViewSet, MusicCategoryViewSet, MusicVersionViewSet
@@ -31,19 +34,37 @@ router.register('playlist', PlaylistViewSet, basename='Playlist')
 router.register('praise-lineup', PraiseLineupViewSet, basename='Escalação do louvor')
 
 
+# Documentação
+schema_view = get_schema_view(
+   openapi.Info(
+      title="API de Gerenciamento do louvor",
+      default_version='v1',
+      description="Organizador das musicas e gerenciamento de escalações do louvor da igreja",
+      terms_of_service="#",
+      contact=openapi.Contact(email="wilian.santos.dev@outlook.com"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=[permissions.AllowAny],
+)
+
+
 urlpatterns = [
-    path('api/praise/', include(router.urls)),
+   path('api/praise/', include(router.urls)),
 
-    path('api-admin-praise/', admin.site.urls),
+   path('api-admin-praise/', admin.site.urls),
 
-    # rotas de autenticação
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+   # rotas de autenticação
+   path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+   path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    #rota tinymce
-    path('tinymce/', include('tinymce.urls')),
+   #rota tinymce
+   path('tinymce/', include('tinymce.urls')),
 
-    # rotas do django-activity-stream
-    path('activity/', include('actstream.urls')),
+   # rotas do django-activity-stream
+   path('activity/', include('actstream.urls')),
+
+   path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -15,6 +15,7 @@ django-tinymce = "*"
 django-filter = "*"
 django-redis = "*"
 django-activity-stream = "*"
+drf-yasg = "*"
 
 [dev-packages]
 

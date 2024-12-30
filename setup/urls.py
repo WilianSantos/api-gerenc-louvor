@@ -3,14 +3,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from rest_framework import routers, permissions
 
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-from apps.accounts.views import UserViewSet, MemberViewSet
+from apps.accounts.views import UserViewSet, MemberViewSet, MemberFunctionsViewSet, ChangePasswordView, \
+   CustomTokenObtainPairView
 from apps.music.views import MusicViewSet, MusicCategoryViewSet, MusicVersionViewSet
 from apps.playlist.views import PlaylistViewSet
 from apps.lineup.views import PraiseLineupViewSet
@@ -21,6 +22,7 @@ router = routers.DefaultRouter()
 # Rotas de accounts
 router.register('user', UserViewSet, basename='Usuario')
 router.register('member', MemberViewSet, basename='Membro')
+router.register('member-functions', MemberFunctionsViewSet, basename='Funções de membros')
 
 # Rotas de music
 router.register('music', MusicViewSet, basename='Música')
@@ -51,11 +53,12 @@ schema_view = get_schema_view(
 
 urlpatterns = [
    path('api/praise/', include(router.urls)),
+   path('api/praise/', include('apps.accounts.urls')),
 
    path('api-admin-praise/', admin.site.urls),
 
    # rotas de autenticação
-   path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+   path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
    #rota tinymce

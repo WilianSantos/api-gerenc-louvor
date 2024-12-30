@@ -115,7 +115,7 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'PASSWORD': str(os.getenv('PASSWORD_MYSQL')),
+            'PASSWORD': str(os.getenv('PASSWORD_REDIS')),
         }
     }
 }
@@ -179,15 +179,15 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_THROTTLE_RATES': {
         'anon': '3/min',  # Limita 3 requisições por minuto para usuários anônimos
-        'user': '1000/day',  # Limita 1000 requisições por dia para usuários autenticados
+        'user': '5000/day',  # Limita 1000 requisições por dia para usuários autenticados
     }
 }
 
 
-# Configurações do JWTAuthentication (rest_framework_simplejwt)
+# Configurações do SimpleJWT JWTAuthentication (rest_framework_simplejwt)
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
@@ -202,3 +202,23 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 TINYMCE_SPELLCHECKER = True
 TINYMCE_COMPRESSOR = True
+
+
+# Validador de senha
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        },
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]

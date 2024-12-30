@@ -1,0 +1,58 @@
+[
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 1,
+        "fields": {
+            "functions_name": "Vocal Principal"
+        }
+    },
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 2,
+        "fields": {
+            "functions_name": "Backing Vocal"
+        }
+    },
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 3,
+        "fields": {
+            "functions_name": "Coral"
+        }
+    },
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 4,
+        "fields": {
+            "functions_name": "Guitarra Elétrica"
+        }
+    },
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 5,
+        "fields": {
+            "functions_name": "Baixo Elétrico"
+        }
+    },
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 6,
+        "fields": {
+            "functions_name": "Violão"
+        }
+    },
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 7,
+        "fields": {
+            "functions_name": "Teclado"
+        }
+    },
+    {
+        "model": "accounts.MemberFunctions",
+        "pk": 8,
+        "fields": {
+            "functions_name": "Bateria"
+        }
+    }
+]

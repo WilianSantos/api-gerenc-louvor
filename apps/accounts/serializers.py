@@ -1,7 +1,11 @@
 from django.contrib.auth.models import User
-from .models import Member
+from django.contrib.auth.password_validation import validate_password
+
+from .models import Member, MemberFunctions
 
 from rest_framework import serializers
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class UserSerializers(serializers.ModelSerializer):
@@ -16,8 +20,37 @@ class UserSerializers(serializers.ModelSerializer):
         return user
     
 
+class MemberFunctionsSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = MemberFunctions
+        fields = '__all__'
+    
+
 class MemberSerializers(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = '__all__'
-        
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Adicionar o user_id ao payload
+        user = self.user
+        data['user_id'] = user.id  # Adiciona o ID do usuário ao payload
+
+        member = Member.objects.get(user=user.id)
+        data['member_id'] = member.id
+
+        return data
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_new_password(self, value):
+        # Usar o validador de senha embutido do Django
+        validate_password(value)
+        return value

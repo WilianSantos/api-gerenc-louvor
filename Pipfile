@@ -16,6 +16,7 @@ django-filter = "*"
 django-redis = "*"
 django-activity-stream = "*"
 drf-yasg = "*"
+redis = "*"
 
 [dev-packages]
 

@@ -54,3 +54,22 @@ class ChangePasswordSerializer(serializers.Serializer):
         # Usar o validador de senha embutido do Django
         validate_password(value)
         return value
+    
+
+class EmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Nenhum usuário com este e-mail foi encontrado.")
+        return value
+    
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_new_password(self, value):
+        # Usar o validador de senha embutido do Django
+        validate_password(value)
+        return value

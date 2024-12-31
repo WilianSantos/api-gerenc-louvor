@@ -6,6 +6,7 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import AccessToken
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -43,9 +44,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class ChangePasswordView(APIView):
     #documentação da api
     @swagger_auto_schema(
+        operation_description="Rota para mudar senha com token. Nessa rota o usuario consegue alterar sua senha.",
         request_body=ChangePasswordSerializer,
         responses={
-            200: openapi.Response("Senha alterada com sucesso!"),
             400: openapi.Response("Senha antiga incorreta."),
         }
     )
@@ -56,23 +57,27 @@ class ChangePasswordView(APIView):
 
             # Verificar a senha antiga
             if not user.check_password(serializer.validated_data['old_password']):
-                return Response({"old_password": "Senha antiga incorreta."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "Senha antiga incorreta."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Alterar para a nova senha
             user.set_password(serializer.validated_data['new_password'])
             user.save()
 
-            return Response({"message": "Senha alterada com sucesso!"}, status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_200_OK)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 class RequestPasswordResetView(APIView):
+    authentication_classes = []  # Sem autenticação padrão
+
     #documentação da api
     @swagger_auto_schema(
+        operation_description="Rota para redefinição de senha. Envia o e-mail para a rota e recebe um token provisorio",
         request_body=EmailVerificationSerializer,
         responses={
-            200: openapi.Response("reset_token")
+            200: openapi.Response("reset_token"),
+            400: openapi.Response("E-mail não coresponde com nenhum usuário."),
         }
     )
     def post(self, request):
@@ -81,6 +86,9 @@ class RequestPasswordResetView(APIView):
             email = serializer.validated_data['email']
             user = User.objects.get(email=email)
             
+            if not user:
+                return Response({"detail": "E-mail não coresponde com nenhum usuário."}, status=status.HTTP_400_BAD_REQUEST)
+
             # Gera o token de redefinição de senha
             reset_token = generate_reset_password_token(user)
 
@@ -90,19 +98,16 @@ class RequestPasswordResetView(APIView):
 
 
 class ResetPasswordView(APIView):
-    permission_classes = [AllowAny]  # Aberto para todos
     authentication_classes = []  # Sem autenticação padrão
 
     #documentação da api
     @swagger_auto_schema(
-        request_body=ResetPasswordSerializer,
-        responses={
-            200: openapi.Response("Senha redefinida com sucesso!")
-        }
+        operation_description="Rota para redefinição de senha. Nessa rota é recebida o token de acesso provisório e a nova senha.",
+        request_body=ResetPasswordSerializer
     )
     
-    def post(self):
-        serializer = ResetPasswordSerializer
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
         if serializer.is_valid():
             token = serializer.validated_data['token']
             new_password = serializer.validated_data['new_password']
@@ -111,13 +116,16 @@ class ResetPasswordView(APIView):
                 # Valida o token JWT
                 user_data = JWTAuthentication().get_validated_token(token)
                 if user_data['purpose'] != 'password_reset':
-                    raise AuthenticationFailed('Token inválido ou expirado.')
+                    raise AuthenticationFailed(detail='Token inválido ou expirado.')
                 
                 # Redefine a senha
                 user = User.objects.get(id=user_data['user_id'])
                 user.set_password(new_password)
                 user.save()
                 
-                return Response({"message": "Senha redefinida com sucesso!"}, status=status.HTTP_200_OK)
+                return Response(status=status.HTTP_200_OK)
             except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
+
+

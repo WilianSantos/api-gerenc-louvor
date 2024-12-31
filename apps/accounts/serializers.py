@@ -73,3 +73,20 @@ class ResetPasswordSerializer(serializers.Serializer):
         # Usar o validador de senha embutido do Django
         validate_password(value)
         return value
+    
+
+class GenerateTemporaryTokenSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
+class RegisterUserSerializer(serializers.Serializer):
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    username = serializers.CharField(required=True)
+    password = serializers.CharField()
+    email = serializers.EmailField(required=True)
+    availability = serializers.BooleanField()
+    profile_picture = serializers.ImageField()
+    function = serializers.ChoiceField()
+    cell_phone = serializers.CharField()
+    token = serializers.CharField(required=True)

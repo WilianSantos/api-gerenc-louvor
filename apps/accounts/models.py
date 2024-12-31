@@ -11,7 +11,7 @@ class MemberFunctions(models.Model):
 
 class Member(models.Model):
     name = models.CharField(max_length=150, null=False, blank=False)
-    availability = models.BooleanField()
+    availability = models.BooleanField(default=True)
     cell_phone = models.CharField(max_length=14, blank=True)
     profile_picture = models.ImageField(upload_to="profile_picture/%Y/%m/%d/", blank=True)
     function = models.ManyToManyField(MemberFunctions)

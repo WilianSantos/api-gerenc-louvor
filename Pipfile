@@ -17,6 +17,7 @@ django-redis = "*"
 django-activity-stream = "*"
 drf-yasg = "*"
 redis = "*"
+itsdangerous = "*"
 
 [dev-packages]
 

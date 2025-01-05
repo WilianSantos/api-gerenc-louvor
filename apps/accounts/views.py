@@ -1,13 +1,17 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import AuthenticationFailed
 
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+
+from itsdangerous import URLSafeTimedSerializer
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -15,6 +19,7 @@ from drf_yasg import openapi
 from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.conf import settings
 
 from .serializers import \
     UserSerializers, MemberSerializers, MemberFunctionsSerializers, \
@@ -38,6 +43,11 @@ class MemberFunctionsViewSet(viewsets.ModelViewSet):
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializers
+
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    ordering_fields = ['name']
+    filterset_fields = ['user']
+
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -136,82 +146,93 @@ class ResetPasswordView(APIView):
 
 class GenerateTemporaryTokenView(APIView):
     @swagger_auto_schema(
-        operation_description="Rota para gerar um token temporario. Recebe o e-mail e gera um token.",
+        operation_description="Rota para gerar um token temporário. Recebe o e-mail e gera um token.\n temporary_token",
         request_body=GenerateTemporaryTokenSerializer
     )
-
     def post(self, request):
         serializer = GenerateTemporaryTokenSerializer(data=request.data)
-        email = request.data.get('email')
         
-        if serializer:
-            if not email:
-                return Response({"detail": "O campo 'email' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Gerar um token provisório com expiração curta
-            temporary_token = AccessToken()
-            temporary_token.set_exp(lifetime=timedelta(minutes=5))  # Token válido por 30 minutos
-            temporary_token['email'] = email
-            temporary_token['purpose'] = 'registration'
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = serializer.validated_data.get('email')
+        
+        # Gerar um token provisório com expiração curta
+        temporary_token = AccessToken()
+        temporary_token.set_exp(lifetime=timedelta(days=1))  # Token válido por 1 dias
+        temporary_token['email'] = email
+        temporary_token['purpose'] = 'registration'
 
-            return Response({"temporary_token": str(temporary_token)}, status=status.HTTP_200_OK)
+        return Response({"temporary_token": str(temporary_token)}, status=status.HTTP_200_OK)
+
     
 
 class RegisterUserView(APIView):
+    authentication_classes = []  # Desabilita autenticação para esta rota
+    permission_classes = [AllowAny]  # Permite acesso público
+
     @swagger_auto_schema(
-        operation_description="Rota para registrar o usuário no banco. Recebe os campos necessarios para o registro junto com o token e criar o usuário e o membro.",
+        operation_description="Rota para registrar o usuário no banco. Recebe os campos necessários para o registro junto com o token e cria o usuário e o membro.",
         request_body=RegisterUserSerializer
     )
-
     def post(self, request):
         serializer = RegisterUserSerializer(data=request.data)
-
-        first_name = request.data.get('first_name')
-        last_name = request.data.get('last_name')
-        username = request.data.get('username')
-        password = request.data.get('password')
-        email = request.data.get('email')
-        availability = request.data.get('availability') 
-        profile_picture = request.data.get('profile_picture')
-        function = request.data.get('function')
-        cell_phone = request.data.get('cell_phone')
-        token = request.data.get('token')
         
-        if serializer.is_valid():
-            if not all([token, email, password, first_name, last_name, username]):
-                return Response({"detail": "Existem campos obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            try:
-                # Decodificar o token
-                decoded_token = AccessToken(token)
-                
-                if decoded_token['purpose'] != 'registration':
-                    return Response({"detail": "Token inválido para registro."}, status=status.HTTP_400_BAD_REQUEST)
-                
-                if decoded_token['email'] != email:
-                    return Response({"detail": "Token não corresponde ao e-mail fornecido."}, status=status.HTTP_400_BAD_REQUEST)
-                
-            except TokenError:
-                return Response({"detail": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if User.objects.get(username=username):
-                return Response({"detail": "Esse usuário ja existe."}, status=status.HTTP_400_BAD_REQUEST)
-            # Criar o usuário
-            User.objects.create_user(
-                email=email, 
-                password=password, 
-                first_name=first_name,
-                last_name=last_name,
-                username=username
-            )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            user = User.objects.get(username=username)
-            Member.objects.create(
-                name=first_name + ' ' + last_name,
-                availability=availability,
-                cell_phone=cell_phone,
-                profile_picture=profile_picture,
-                function=function,
-                user=user.id
-            )
-        return Response(status=status.HTTP_201_CREATED)
+        email = serializer.validated_data['email']
+        first_name = serializer.validated_data['first_name']
+        last_name = serializer.validated_data['last_name']
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
+        cell_phone = serializer.validated_data.get('cell_phone', '')
+        token = serializer.validated_data['token']
+
+        try:
+            # Decodificar o token
+            decoded_token = JWTAuthentication().get_validated_token(token)
+            
+            if decoded_token.get('purpose') != 'registration':
+                return Response({"detail": "Token inválido para registro."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if decoded_token.get('email') != email:
+                return Response({"detail": "Token não corresponde ao e-mail fornecido."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        except TokenError:
+            return Response({"detail": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar se o usuário já existe
+        if User.objects.filter(username=username).exists():
+            return Response({"detail": "Esse usuário já existe."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not username:
+            return Response({"detail": "É preciso digitar um usuário."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Criar o usuário e o membro
+        user = User.objects.create_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            username=username
+        )
+        member = Member.objects.create(
+            name=f"{first_name} {last_name}",
+            cell_phone=cell_phone,
+            user=user
+        )
+
+        return Response({"user_id": user.id, "member_id": member.id}, status=status.HTTP_201_CREATED)
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+            return response
+        except InvalidToken as e:
+            return Response({
+                "detail": "O token é inválido ou expirado",
+                "code": "refresh_token_not_valid"
+            }, status=status.HTTP_401_UNAUTHORIZED)

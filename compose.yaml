@@ -1,0 +1,35 @@
+services:
+  db:
+    image: mysql:8.0
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PASSWORD_MYSQL}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      
+  redis:
+    image: redis:7.0
+    command: redis-server --requirepass ${PASSWORD_REDIS}
+    env_file:
+      - .env
+    ports:
+      - "6379:6379"
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+
+volumes:
+  db_data:

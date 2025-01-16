@@ -96,15 +96,14 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'praise_management_api',
-        "USER": "root",
-        "PASSWORD": str(os.getenv('PASSWORD_MYSQL')),
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
+        'NAME': os.getenv('DATABASE_NAME', 'praise_management_api'),
+        "USER": os.getenv('DATABASE_USER', 'root'),
+        "PASSWORD": os.getenv('PASSWORD_MYSQL', ''),
+        "HOST": os.getenv('DATABASE_HOST', 'db'),  # 'db' é o nome do serviço no docker-compose
+        "PORT": os.getenv('DATABASE_PORT', '3306'),
     }
 }
 
@@ -112,10 +111,10 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": os.getenv('REDIS_URL', 'redis://redis:6379/1'),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            'PASSWORD': str(os.getenv('PASSWORD_REDIS')),
+            "PASSWORD": os.getenv('PASSWORD_REDIS', ''),
         }
     }
 }
@@ -178,15 +177,15 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '3/min',  # Limita 3 requisições por minuto para usuários anônimos
-        'user': '5000/day',  # Limita 1000 requisições por dia para usuários autenticados
+        'anon': '1/min',  # Limita 3 requisições por minuto para usuários anônimos
+        'user': '1000/day',  # Limita 1000 requisições por dia para usuários autenticados
     }
 }
 
 
 # Configurações do SimpleJWT JWTAuthentication (rest_framework_simplejwt)
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
@@ -202,23 +201,3 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 TINYMCE_SPELLCHECKER = True
 TINYMCE_COMPRESSOR = True
-
-
-# Validador de senha
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,
-        },
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]

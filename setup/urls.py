@@ -26,8 +26,8 @@ router.register('member-functions', MemberFunctionsViewSet, basename='Funções 
 
 # Rotas de music
 router.register('music', MusicViewSet, basename='Música')
-router.register('music', MusicCategoryViewSet, basename='Categoria da música')
-router.register('music', MusicVersionViewSet, basename='Versões da música')
+router.register('music-category', MusicCategoryViewSet, basename='Categoria da música')
+router.register('music-version', MusicVersionViewSet, basename='Versões da música')
 
 # Rotas de playlist
 router.register('playlist', PlaylistViewSet, basename='Playlist')

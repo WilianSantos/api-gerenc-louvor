@@ -4,7 +4,7 @@ from tinymce.models import HTMLField
 
 
 class MusicCategory(models.Model):
-    category_name = models.CharField(max_length=50, null=False, blank=False, unique=True) #TODO alterar para category_name
+    category_name = models.CharField(max_length=50, null=False, blank=False, unique=True) 
 
     def __str__(self) -> str:
         return self.category_name
@@ -15,7 +15,7 @@ class Music(models.Model):
     author = models.CharField(max_length=100, null=False, blank=False)
     category = models.ManyToManyField(MusicCategory)                                  
     music_tone = models.CharField(max_length=10, blank=False)  # Campo para o tom da música
-    music_chord = models.JSONField(max_length=10, blank=False)
+    music_chord = models.CharField(max_length=50, blank=False)
     music_text = HTMLField()
     music_link = models.URLField(max_length=255, blank=True)
 

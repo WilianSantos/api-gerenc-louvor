@@ -34,7 +34,7 @@ SECRET_KEY = str(os.getenv('SECRET_KEY_DJANGO'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -102,7 +102,7 @@ DATABASES = {
         'NAME': os.getenv('DATABASE_NAME', 'praise_management_api'),
         "USER": os.getenv('DATABASE_USER', 'root'),
         "PASSWORD": os.getenv('PASSWORD_MYSQL', ''),
-        "HOST": os.getenv('DATABASE_HOST', 'db'),  # 'db' é o nome do serviço no docker-compose
+        "HOST": os.getenv('DATABASE_HOST', 'db-praise-api'),  # 'db' é o nome do serviço no docker-compose
         "PORT": os.getenv('DATABASE_PORT', '3306'),
     }
 }
@@ -111,7 +111,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.getenv('REDIS_URL', 'redis://redis:6379/1'),
+        "LOCATION": "redis://redis-praise-api:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": os.getenv('PASSWORD_REDIS', ''),

@@ -1,0 +1,16 @@
+[
+    {
+        "model": "music.MusicCategory",
+        "pk": 1,
+        "fields": {
+            "category_name": "Hino"
+        }
+    },
+    {
+        "model": "music.MusicCategory",
+        "pk": 2,
+        "fields": {
+            "category_name": "Cânticos"
+        }
+    }
+]

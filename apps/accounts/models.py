@@ -1,26 +1,44 @@
-from django.db import models
+from tinymce.models import HTMLField
 from django.contrib.auth.models import User
+from django.db import models
+
+
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
 
 
 class MemberFunctions(models.Model):
-    functions_name = models.CharField(max_length=50, unique=True, blank=False, null=False)
+    function_name = models.CharField(
+        max_length=50, unique=True, blank=False, null=False
+    )
+    description = HTMLField(blank=True)
 
     def __str__(self):
-        return self.functions_name
+        return self.function_name
 
 
-class Member(models.Model):
+class Member(TimeStampedModel):
     name = models.CharField(max_length=150, null=False, blank=False)
     availability = models.BooleanField(default=True)
     cell_phone = models.CharField(max_length=14, blank=True)
-    profile_picture = models.ImageField(upload_to="profile_picture/%Y/%m/%d/", blank=True)
-    function = models.ManyToManyField(MemberFunctions)
+    profile_picture = models.ImageField(
+        upload_to="profile_picture/%Y/%m/%d/", blank=True, null=True
+    )
+    function = models.ManyToManyField(MemberFunctions, blank=True)
     user = models.OneToOneField(
-        to=User,
-        on_delete=models.CASCADE,
-        blank=False,
-        related_name='user'
+        to=User, on_delete=models.CASCADE, blank=False, related_name="user"
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["availability"]),
+            models.Index(fields=["user"]),
+        ]
+
     def __str__(self):
-        return f'{self.name} | {self.function}'
+        functions = ", ".join(f.function_name for f in self.function.all())
+        return f"{self.name} | {functions or 'Sem função'}"

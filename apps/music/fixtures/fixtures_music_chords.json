@@ -1,0 +1,234 @@
+[
+  {
+    "model": "music.MusicChord",
+    "pk": 1,
+    "fields": {
+      "chord_name": "C",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 2,
+    "fields": {
+      "chord_name": "C#",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 3,
+    "fields": {
+      "chord_name": "Db",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 4,
+    "fields": {
+      "chord_name": "D",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 5,
+    "fields": {
+      "chord_name": "D#",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 6,
+    "fields": {
+      "chord_name": "Eb",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 7,
+    "fields": {
+      "chord_name": "E",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 8,
+    "fields": {
+      "chord_name": "F",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 9,
+    "fields": {
+      "chord_name": "F#",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 10,
+    "fields": {
+      "chord_name": "Gb",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 11,
+    "fields": {
+      "chord_name": "G",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 12,
+    "fields": {
+      "chord_name": "G#",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 13,
+    "fields": {
+      "chord_name": "Ab",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 14,
+    "fields": {
+      "chord_name": "A",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 15,
+    "fields": {
+      "chord_name": "A#",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 16,
+    "fields": {
+      "chord_name": "Bb",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 17,
+    "fields": {
+      "chord_name": "B",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 18,
+    "fields": {
+      "chord_name": "Cm",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 19,
+    "fields": {
+      "chord_name": "C#m",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 20,
+    "fields": {
+      "chord_name": "Dm",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 21,
+    "fields": {
+      "chord_name": "D#m",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 22,
+    "fields": {
+      "chord_name": "Em",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 23,
+    "fields": {
+      "chord_name": "Fm",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 24,
+    "fields": {
+      "chord_name": "F#m",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 25,
+    "fields": {
+      "chord_name": "Gm",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 26,
+    "fields": {
+      "chord_name": "G#m",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 27,
+    "fields": {
+      "chord_name": "Am",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 28,
+    "fields": {
+      "chord_name": "A#m",
+      "chord_image": null
+    }
+  },
+  {
+    "model": "music.MusicChord",
+    "pk": 29,
+    "fields": {
+      "chord_name": "Bm",
+      "chord_image": null
+    }
+  }
+]

@@ -1,49 +1,59 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-
-from .models import Member, MemberFunctions
-
 from rest_framework import serializers
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from drf_writable_nested.serializers import WritableNestedModelSerializer
+
+from .models import Member, MemberFunctions
 
 
 class UserSerializers(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'password', 'username', 'first_name', 'last_name', 'email']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ["id", "password", "username", "first_name", "last_name", "email"]
+        extra_kwargs = {"password": {"write_only": True}}
 
-    
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
     
+    # def validate_username(self, value):
+    #     user = self.context['request'].user
+    #     # Verifica se o nome de usuário já existe, excluindo o usuário atual
+    #     if User.objects.exclude(pk=user.pk).filter(username=value).exists():
+    #         raise serializers.ValidationError("Este nome de usuário já está em uso.")
+    #     return value
+
 
 class MemberFunctionsSerializers(serializers.ModelSerializer):
     class Meta:
         model = MemberFunctions
-        fields = '__all__'
-    
+        fields = "__all__"
 
-class MemberSerializers(serializers.ModelSerializer):
+
+class MemberSerializer(WritableNestedModelSerializer):
+    
+    class Meta:
+        model = Member
+        fields = "__all__"
+
+
+class MemberMeSerializer(serializers.ModelSerializer):
+    user = UserSerializers(read_only=True)
+    function = MemberFunctionsSerializers(many=True, read_only=True)
+    profile_picture = serializers.ImageField(read_only=True)
+
+    profile_picture = serializers.SerializerMethodField()
+
     class Meta:
         model = Member
         fields = '__all__'
 
-
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-
-        # Adicionar o user_id ao payload
-        user = self.user
-        data['user_id'] = user.id  # Adiciona o ID do usuário ao payload
-
-        member = Member.objects.get(user=user.id)
-        data['member_id'] = member.id
-
-        return data
+    def get_profile_picture(self, obj):
+        request = self.context.get("request")
+        if obj.profile_picture:
+            return request.build_absolute_uri(obj.profile_picture.url)
+        return None
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -54,26 +64,23 @@ class ChangePasswordSerializer(serializers.Serializer):
         # Usar o validador de senha embutido do Django
         validate_password(value)
         return value
-    
 
-class EmailVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
 
-    def validate_email(self, value):
-        if not User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Nenhum usuário com este e-mail foi encontrado.")
+class RequestPasswordResetSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+
+    def validate_username(self, value):
+        if not User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                "Nenhum usuário encontrado com esse nome."
+            )
         return value
-    
 
-class ResetPasswordSerializer(serializers.Serializer):
-    token = serializers.CharField(required=True)
+
+class PasswordResetSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True, max_length=500)
     new_password = serializers.CharField(required=True)
 
-    def validate_new_password(self, value):
-        # Usar o validador de senha embutido do Django
-        validate_password(value)
-        return value
-    
 
 class GenerateTemporaryTokenSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)

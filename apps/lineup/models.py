@@ -1,32 +1,56 @@
-from django.db import models
-
 from datetime import date
 
+from django.db import models
+from django.forms import ValidationError
+
+from apps.accounts.models import Member, MemberFunctions, TimeStampedModel
 from apps.playlist.models import Playlist
-from apps.accounts.models import Member
 
-class PraiseLineup(models.Model):
-    # Vocal
-    lead_vocals = models.ManyToManyField(Member, blank=False, related_name='lineup_lead_vocals')
-    backing_vocals = models.ManyToManyField(Member, blank=True, related_name='lineup_backing_vocals')
-    choir = models.ManyToManyField(Member, blank=True, related_name='lineup_choir')
 
-    # Instrumentos de Cordas
-    electric_guitar = models.ManyToManyField(Member, blank=True, related_name='lineup_electric_guitar')
-    electric_bass = models.ManyToManyField(Member, blank=True, related_name='lineup_electric_bass')
-    guitar = models.ManyToManyField(Member, blank=True, related_name='lineup_guitar')
-
-    # Instrumentos de Teclado
-    musical_keyboard = models.ManyToManyField(Member, blank=True, related_name='lineup_musical_keyboard')
-
-    # Instrumentos de Percussão
-    drum_set = models.ManyToManyField(Member, blank=True, related_name='lineup_drum_set')
-
-    lineup_date = models.DateField(default=date.today, blank=False)
+class PraiseLineup(TimeStampedModel):
+    lineup_date = models.DateField(default=date.today)
     lineup_event = models.CharField(max_length=100, blank=True)
     playlist = models.ForeignKey(
-        to=Playlist,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        Playlist, on_delete=models.SET_NULL, null=True, blank=True
     )
+
+    def __str__(self):
+        return f'{self.lineup_event or "Escala"} | {self.lineup_date}'
+
+
+class LineupMember(TimeStampedModel):
+    lineup = models.ForeignKey(
+        PraiseLineup, on_delete=models.CASCADE, related_name="members"
+    )
+    member = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, blank=True)
+    member_name_snapshot = models.CharField(max_length=150, blank=True)
+
+    function = models.ForeignKey(MemberFunctions, on_delete=models.SET_NULL, null=True, blank=True)
+    function_name_snapshot = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        unique_together = ("lineup", "member", "function")
+
+    def save(self, *args, **kwargs):
+        # Atualiza snapshot sempre que houver alteração
+        if self.member:
+            self.member_name_snapshot = self.member.name
+        if self.function:
+            self.function_name_snapshot = self.function.function_name
+        super().save(*args, **kwargs)
+
+    def get_member_display(self):
+        return self.member.name if self.member else self.member_name_snapshot
+
+    def get_function_display(self):
+        return self.function.function_name if self.function else self.function_name_snapshot
+
+    def clean(self):
+        if not self.member.function.filter(pk=self.function.pk).exists():
+            raise ValidationError(f"{self.member.name} não possui a função '{self.function.function_name}'")
+
+
+    def __str__(self):
+        return (
+            f"{self.member} como {self.function} na escala de {self.lineup.lineup_date}"
+        )

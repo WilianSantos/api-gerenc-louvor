@@ -7,8 +7,6 @@ services:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
-    networks:
-      - app-network
       
   redis-praise-api:
     image: redis:latest
@@ -21,24 +19,22 @@ services:
     volumes:
       - redis_data:/data
     restart: always
-    networks:
-      - app-network
   
-  praise-api:
-    build: .
-    container_name: praise-api
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db-praise-api
-      - redis-praise-api
-    env_file:
-      - .env
-    networks:
-      - app-network
+  # praise-api:
+  #   build: .
+  #   container_name: praise-api
+  #   command: python manage.py runserver 0.0.0.0:8000
+  #   volumes:
+  #     - .:/app
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - db-praise-api
+  #     - redis-praise-api
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - app-network
 
 networks:
   app-network:

@@ -6,4 +6,4 @@ from .models import Playlist
 class PlaylistSerializers(serializers.ModelSerializer):
     class Meta:
         model = Playlist
-        fields = '__all__'
+        fields = "__all__"

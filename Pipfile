@@ -18,8 +18,16 @@ django-activity-stream = "*"
 drf-yasg = "*"
 redis = "*"
 itsdangerous = "*"
+django-cors-headers = "*"
+python-dateutil = "*"
+drf-writable-nested = "*"
+pymupdf = "*"
+pychord = "*"
 
 [dev-packages]
+isort = "*"
+flake8 = "*"
+black = "*"
 
 [requires]
 python_version = "3.12"

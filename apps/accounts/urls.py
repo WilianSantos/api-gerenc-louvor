@@ -1,8 +1,8 @@
 from django.urls import path
 
-from .views import (ChangePasswordView, GenerateTemporaryTokenView,
+from .views import (ChangePasswordView,
                     LogoutView, PasswordResetView, RegisterUserView, MemberMeView, MemberMeListView,
-                    RequestPasswordResetView)
+                    RequestPasswordResetView, SendRegistrationEmailView, VerifyRegistrationTokenView)
 
 urlpatterns = [
     path("change-password/", ChangePasswordView.as_view(), name="change_password"),
@@ -12,11 +12,10 @@ urlpatterns = [
         name="request_password_reset",
     ),
     path("password-reset/", PasswordResetView.as_view(), name="password_reset"),
-    path(
-        "token-temporary/", GenerateTemporaryTokenView.as_view(), name="temporary_token"
-    ),
     path("register-user/", RegisterUserView.as_view(), name="register_user"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("me/", MemberMeView.as_view(), name="member_me"),
-    path("members-me", MemberMeListView.as_view(), name="member_me_list")
+    path("members-me", MemberMeListView.as_view(), name="member_me_list"),
+    path('send-registration-email/', SendRegistrationEmailView.as_view()),
+    path('verify-registration-token/', VerifyRegistrationTokenView.as_view()),
 ]

@@ -1,5 +1,10 @@
 from datetime import timedelta
 
+from django.conf import settings
+
+from .utils import generate_email_token, verify_email_token
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
@@ -21,10 +26,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Member, MemberFunctions
 from .serializers import (ChangePasswordSerializer,
-                          GenerateTemporaryTokenSerializer,
+                          SendEmailResponseSerializer,
                           MemberFunctionsSerializers, MemberSerializer, MemberMeSerializer,
-                          PasswordResetSerializer, RegisterUserSerializer,
-                          RequestPasswordResetSerializer, UserSerializers)
+                          PasswordResetSerializer, RegisterUserSerializer, SendEmailSerializer,
+                          RequestPasswordResetSerializer, UserSerializers, TokenVerificationSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -92,9 +97,11 @@ class MemberMeListView(ListAPIView):
     pagination_class = None
     filter_backends = [
         DjangoFilterBackend,
-        filters.OrderingFilter
+        filters.OrderingFilter,
+        filters.SearchFilter,
     ]
     ordering_fields = ["name"]
+    search_fields = ["name", "function__function_name"]
         
 
 class CookieTokenObtainPairView(TokenObtainPairView):
@@ -300,40 +307,12 @@ class PasswordResetView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class GenerateTemporaryTokenView(APIView):
-    @swagger_auto_schema(
-        operation_description="Rota para gerar um token temporário.",
-        request_body=GenerateTemporaryTokenSerializer,
-        responses={201: openapi.Response("Sem conteúdo")},
-    )
-    def post(self, request):
-        serializer = GenerateTemporaryTokenSerializer(data=request.data)
-
-        if serializer.is_valid():
-            email = serializer.validated_data.get("email")
-
-            # Gerar um token provisório com expiração
-            temporary_token = AccessToken()
-            temporary_token.set_exp(
-                lifetime=timedelta(days=1)
-            )  # Token válido por 1 dias
-            temporary_token["email"] = email
-            temporary_token["purpose"] = "registration"
-
-            return Response(
-                {"temporary_token": str(temporary_token)},
-                status=status.HTTP_201_CREATED,
-            )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class RegisterUserView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(
-        operation_description="Rota para registrar o usuário no banco.",
+        operation_description="Rota para registrar o usuário.",
         request_body=RegisterUserSerializer,
         responses={201: openapi.Response("user_id"), 400: openapi.Response("detail")},
     )
@@ -343,6 +322,7 @@ class RegisterUserView(APIView):
         if serializer.is_valid():
             first_name = serializer.validated_data["first_name"]
             last_name = serializer.validated_data["last_name"]
+            name = serializer.validated_data["name"]
             username = serializer.validated_data["username"]
             email = serializer.validated_data["email"]
             password = serializer.validated_data["password"]
@@ -367,18 +347,18 @@ class RegisterUserView(APIView):
             except TokenError:
                 return Response(
                     {"detail": "Token inválido ou expirado."},
-                    status=status.HTTP_400_BAD_REQUEST,
+                    status=status.HTTP_401_UNAUTHORIZED,
                 )
 
             if User.objects.filter(username=username).exists():
                 return Response(
-                    {"detail": "Esse usuário já existe."},
+                    {"username": "Esse usuário já existe."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
             if decoded_token.get("email") != email:
                 return Response(
-                    {"detail": "Esse e-mail não corresponde."},
+                    {"email": "Esse e-mail não corresponde."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -391,9 +371,117 @@ class RegisterUserView(APIView):
             )
 
             Member.objects.create(
-                name=f"{first_name} {last_name}", cell_phone=cell_phone, user=user
+                name=name, cell_phone=cell_phone, user=user
             )
 
-            return Response({"user_id": user.id}, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class SendRegistrationEmailView(APIView):
+    @swagger_auto_schema(
+        operation_summary="Enviar convites por e-mail",
+        operation_description="Recebe uma lista de e-mails e envia convites personalizados com um link de registro.",
+        request_body=SendEmailSerializer,
+        responses={
+            200: openapi.Response(
+                description="Convites enviados",
+                schema=SendEmailResponseSerializer
+            ),
+            400: "Erro de validação nos dados de entrada",
+            500: "Erro interno ao enviar os convites"
+        }
+    )
+    def post(self, request):
+        serializer = SendEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        from_email = getattr(settings, "EMAIL_HOST_USER", None)
+        if not from_email:
+            return Response(
+                {'detail': 'E-mail host não configurado.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        success = []
+        failed = []
+
+        for email in serializer.validated_data['emails']:
+            try:
+                # Gerar um token provisório com expiração
+                temporary_access_token = AccessToken()
+                temporary_access_token.set_exp(
+                    lifetime=timedelta(days=1)
+                )  # Token válido por 1 dias
+                temporary_access_token["email"] = email
+                temporary_access_token["purpose"] = "registration"
+
+                token = generate_email_token(email)
+                link = f"{settings.FRONTEND_URL}/register?token={token}&temporary_token={temporary_access_token}"
+
+                
+                context = {
+                    "subject": "Você foi convidado para participar do nosso site!",
+                    "message": """
+                    Olá,
+
+                    Você foi convidado para participar do nosso site! Clique no botão abaixo para aceitar o convite.
+                    """,
+                    "link": link,
+                    "link_expired": "Este convite expira em 7 dias.",
+                }
+
+                html_content = render_to_string("emails/invitation_email.html", context)
+                send_email = EmailMultiAlternatives(
+                    subject=context["subject"],
+                    body=f"Seu e-mail não suporta HTML. Clique no link: {link}",
+                    from_email=from_email,
+                    to=[email]
+                )
+                send_email.attach_alternative(html_content, "text/html")
+                send_email.send()
+                success.append(email)
+            except Exception as e:
+                failed.append({'email': email, 'detail': str(e)})
+
+        return Response({
+            "sent": success,
+            "failed": failed
+        }, status=status.HTTP_200_OK)
+
+
+class VerifyRegistrationTokenView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_summary="Verificar token de registro",
+        operation_description="Verifica se o token recebido por e-mail ainda é válido. Retorna o e-mail original se válido.",
+        manual_parameters=[
+            openapi.Parameter(
+                'token',
+                openapi.IN_QUERY,
+                description="Token de verificação recebido por e-mail",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description="Token válido",
+                schema=TokenVerificationSerializer
+            ),
+            400: "Token inválido ou expirado"
+        }
+    )
+    def get(self, request):
+        token = request.query_params.get('token')
+        if not token:
+            return Response({'error': 'Token ausente'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            email = verify_email_token(token)
+            return Response({'valid': True, 'email': email}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'valid': False, 'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)

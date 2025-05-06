@@ -82,15 +82,40 @@ class PasswordResetSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
 
 
-class GenerateTemporaryTokenSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-
 
 class RegisterUserSerializer(serializers.Serializer):
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
+    name = serializers.CharField(required=True)
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     cell_phone = serializers.CharField()
     token = serializers.CharField(required=True, max_length=500)
+    
+
+class SendEmailSerializer(serializers.Serializer):
+    emails = serializers.ListField(
+        child=serializers.EmailField(),
+        allow_empty=False,
+        help_text="Lista de e-mails para os quais o convite será enviado."
+    )
+
+class TokenVerificationSerializer(serializers.Serializer):
+    valid = serializers.BooleanField(help_text="Indica se o token é válido.")
+    email = serializers.EmailField(help_text="Email associado ao token válido.", required=False)
+    detail = serializers.CharField(help_text="Mensagem de erro, caso o token seja inválido.", required=False)
+
+
+class SendEmailResponseSerializer(serializers.Serializer):
+    sent = serializers.ListField(
+        child=serializers.EmailField(),
+        help_text="E-mails enviados com sucesso."
+    )
+    failed = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.CharField()
+        ),
+        help_text="Lista de e-mails que falharam com detalhes do erro."
+    )
+

@@ -27,10 +27,8 @@ class MusicViewSet(viewsets.ModelViewSet):
 
     filter_backends = [
         DjangoFilterBackend,
-        filters.OrderingFilter,
-        filters.SearchFilter,
+        filters.SearchFilter
     ]
-    ordering_fields = ["music_title"]
     search_fields = ["music_title", "author", "category__category_name"]
     filterset_fields = ['category'] 
 
@@ -99,7 +97,6 @@ class MusicViewSet(viewsets.ModelViewSet):
             "counts": queryset.count(),
             "musics": serializer.data
         }, status=status.HTTP_200_OK)
-    
     
     @swagger_auto_schema(
         operation_description="Recebe um arquivo PDF contendo cifras de músicas e retorna o conteúdo formatado para ser exibido no TinyMCE.",

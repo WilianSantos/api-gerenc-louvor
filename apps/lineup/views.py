@@ -12,8 +12,9 @@ from .serializers import LineupMemberSerializers, PraiseLineupSerializers
 
 
 class PraiseLineupViewSet(viewsets.ModelViewSet):
-    queryset = PraiseLineup
+    queryset = PraiseLineup.objects.all()
     serializer_class = PraiseLineupSerializers
+    pagination_class = None
 
     filter_backends = [
         DjangoFilterBackend,

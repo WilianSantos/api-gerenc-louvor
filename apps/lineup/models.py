@@ -14,6 +14,9 @@ class PraiseLineup(TimeStampedModel):
         Playlist, on_delete=models.SET_NULL, null=True, blank=True
     )
 
+    class Meta:
+        ordering = ["-lineup_date"]
+
     def __str__(self):
         return f'{self.lineup_event or "Escala"} | {self.lineup_date}'
 

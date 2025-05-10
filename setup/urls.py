@@ -10,7 +10,7 @@ from apps.accounts.views import (CookieTokenObtainPairView,
                                  CookieTokenRefreshView,
                                  MemberFunctionsViewSet, MemberViewSet, 
                                  UserViewSet)
-from apps.lineup.views import PraiseLineupViewSet
+from apps.lineup.views import PraiseLineupViewSet, LineupMemberViewSet
 from apps.music.views import (MusicCategoryViewSet, MusicChordViewSet,
                               MusicViewSet)
 from apps.playlist.views import PlaylistViewSet
@@ -38,6 +38,7 @@ router.register("api/praise/playlist", PlaylistViewSet, basename="Playlist")
 router.register(
     "api/praise/praise-lineup", PraiseLineupViewSet, basename="Escalação do louvor"
 )
+router.register("api/praise/lineup-member", LineupMemberViewSet, basename="Membros escalados")
 
 
 # Documentação

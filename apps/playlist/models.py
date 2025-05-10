@@ -18,3 +18,12 @@ class Playlist(TimeStampedModel):
 
     def __str__(self):
         return f"{self.playlist_name} | {self.playlist_date}"
+
+    def get_playlist_link_display(self):
+        if not self.music:
+            return []
+        return [
+            music.music_link
+            for music in self.music.all()
+            if hasattr(music, 'music_link') and music.music_link
+        ]

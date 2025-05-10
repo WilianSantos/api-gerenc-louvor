@@ -20,6 +20,14 @@ class PraiseLineup(TimeStampedModel):
     def __str__(self):
         return f'{self.lineup_event or "Escala"} | {self.lineup_date}'
 
+    def get_playlist_display(self):
+        return self.playlist.playlist_name if self.playlist else ''
+
+    def get_playlist_link_display(self):
+        if not self.playlist:
+            return []
+        return self.playlist.get_playlist_link_display()
+
 
 class LineupMember(TimeStampedModel):
     lineup = models.ForeignKey(
@@ -33,6 +41,7 @@ class LineupMember(TimeStampedModel):
 
     class Meta:
         unique_together = ("lineup", "member", "function")
+        ordering = ["-lineup__lineup_date"]
 
     def save(self, *args, **kwargs):
         # Atualiza snapshot sempre que houver alteração

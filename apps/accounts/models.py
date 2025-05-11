@@ -19,6 +19,9 @@ class MemberFunctions(models.Model):
 
     def __str__(self):
         return self.function_name
+    
+    class Meta:
+        ordering = ["function_name"]
 
 
 class Member(TimeStampedModel):
@@ -38,6 +41,7 @@ class Member(TimeStampedModel):
             models.Index(fields=["availability"]),
             models.Index(fields=["user"]),
         ]
+        ordering = ["name"]
 
     def __str__(self):
         functions = ", ".join(f.function_name for f in self.function.all())

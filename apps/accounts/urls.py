@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (ChangePasswordView,
+from .views import (ChangePasswordView, MostEscalatedMembers,
                     LogoutView, PasswordResetView, RegisterUserView, MemberMeView, MemberMeListView,
                     RequestPasswordResetView, SendRegistrationEmailView, VerifyRegistrationTokenView)
 
@@ -18,4 +18,5 @@ urlpatterns = [
     path("members-me", MemberMeListView.as_view(), name="member_me_list"),
     path('send-registration-email/', SendRegistrationEmailView.as_view()),
     path('verify-registration-token/', VerifyRegistrationTokenView.as_view()),
+    path("member/most-escalated", MostEscalatedMembers.as_view(), name="most_escalated_members")
 ]

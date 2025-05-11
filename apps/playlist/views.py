@@ -64,4 +64,32 @@ class PlaylistViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())  
         serializer = self.get_serializer(queryset, many=True)
         return Response({"playlists": serializer.data}, status=status.HTTP_200_OK)
+    
+    @swagger_auto_schema(
+        method='get',
+        operation_description="Retorna o numero de playlist",
+        responses={
+            200: openapi.Response(
+                description="Total de playlist",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "total": openapi.Schema(
+                            type=openapi.TYPE_INTEGER,
+                        )
+                    }
+                )
+            )
+        }
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="total-playlist"
+        
+    )
+    def get_total_playlist(self, request):
+        playlists = Playlist.objects.all()
+        
+        return Response({"total": playlists.count()}, status=status.HTTP_200_OK)
 

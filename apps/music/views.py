@@ -167,6 +167,33 @@ class MusicViewSet(viewsets.ModelViewSet):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        method='get',
+        operation_description="Retorna o numero de musicas",
+        responses={
+            200: openapi.Response(
+                description="Total de musicas",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "total": openapi.Schema(
+                            type=openapi.TYPE_INTEGER,
+                        )
+                    }
+                )
+            )
+        }
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="total-music"
+        
+    )
+    def get_total_music(self, request):
+        musics = Music.objects.all()
+        
+        return Response({"total": musics.count()}, status=status.HTTP_200_OK)
 
 
 class MusicCategoryViewSet(viewsets.ModelViewSet):
@@ -199,41 +226,73 @@ class MusicChordViewSet(viewsets.ModelViewSet):
 
 
 class MostPlayedSongs(APIView):
+    @swagger_auto_schema(
+        operation_description="Retorna as 5 músicas mais tocadas nas playlists dos últimos 6 meses.",
+        responses={
+            200: openapi.Response(
+                description="Lista das músicas mais tocadas",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "top_musics": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    "music": openapi.Schema(type=openapi.TYPE_STRING),
+                                    "author": openapi.Schema(type=openapi.TYPE_STRING),
+                                    "total": openapi.Schema(type=openapi.TYPE_INTEGER)
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+        }
+    )
     def get(self, request):
         date_now = timezone.now()
-        date_last_year = date_now - relativedelta(months=6)
+        # Ajustando para 6 meses conforme a descrição da API
+        date_six_months_ago = date_now - relativedelta(months=6)
 
-        lineup = PraiseLineup.objects.filter(
-            lineup_date__range=(date_last_year, date_now)
+        lineups = PraiseLineup.objects.filter(
+            lineup_date__range=(date_six_months_ago, date_now)
         )
 
-        playlist_ids = lineup.values("playlist")
-        playlist = Playlist.objects.filter(id__in=playlist_ids)
+        playlist_ids = lineups.values_list("playlist_id", flat=True)
+        through_model = Playlist.music.through  # acesso à tabela M2M
 
         top_musics = (
-            playlist.values("music")
+            through_model.objects
+            .filter(playlist_id__in=playlist_ids)
+            .values("music")
             .annotate(total=Count("music"))
-            .order_by("-total")[:5]
+            .order_by("-total")[:10]
         )
 
+        # Abordagem 1: Preservando a ordem usando Case/When no Django
         music_ids = [item["music"] for item in top_musics]
+        
+        print(music_ids)
+        
+        # Buscar músicas com a ordem preservada
         musics = Music.objects.filter(id__in=music_ids)
-
+        
+        print([music.id for music in musics])
+        # Dicionário para mapear ids de músicas com seus totais
+        music_count_map = {item["music"]: item["total"] for item in top_musics}
+        
+        # Criar a lista de resultados mantendo a ordem correta
+        result = []
+        for music in musics:
+            result.append({
+                "music": music.music_title,
+                "author": music.author,
+                "total": music_count_map[music.id]
+            })
+        
         return Response(
-            {
-                "top_musics": [
-                    {
-                        "music": music.music_title,
-                        "author": music.author,
-                        "total": next(
-                            item["total"]
-                            for item in top_musics
-                            if item["music"] == music.id
-                        ),
-                    }
-                    for music in musics
-                ]
-            },
+            {"top_musics": result},
             status=status.HTTP_200_OK,
         )
     

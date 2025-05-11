@@ -1,6 +1,11 @@
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
+from django.db.models import Count
+from django.utils import timezone
 
 from django.conf import settings
+
+from apps.lineup.models import LineupMember, PraiseLineup
 
 from .utils import generate_email_token, verify_email_token
 from django.core.mail import EmailMultiAlternatives
@@ -70,6 +75,34 @@ class MemberViewSet(viewsets.ModelViewSet):
         filters.SearchFilter,
     ]
     ordering_fields = ["name"]
+
+    @swagger_auto_schema(
+        method='get',
+        operation_description="Retorna o numero de membros",
+        responses={
+            200: openapi.Response(
+                description="Total de membros",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "total": openapi.Schema(
+                            type=openapi.TYPE_INTEGER,
+                        )
+                    }
+                )
+            )
+        }
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="total-member"
+        
+    )
+    def get_total_member(self, request):
+        members = Member.objects.all()
+        
+        return Response({"total": members.count()}, status=status.HTTP_200_OK)
 
 
 class MemberMeView(APIView):
@@ -485,3 +518,69 @@ class VerifyRegistrationTokenView(APIView):
             return Response({'valid': True, 'email': email}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'valid': False, 'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+class MostEscalatedMembers(APIView):
+    
+    @swagger_auto_schema(
+        operation_description="Retorna os 10 membros mais escalados no último ano.",
+        responses={
+            200: openapi.Response(
+                description="Lista de membros mais escalados",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "top_members": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    "name": openapi.Schema(type=openapi.TYPE_STRING),
+                                    "total-member": openapi.Schema(type=openapi.TYPE_INTEGER)
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+        }
+    )
+    def get(self, request):
+        date_now = timezone.now()
+        date_last_year = date_now - relativedelta(years=1)
+
+        lineup = PraiseLineup.objects.filter(
+            lineup_date__range=(date_last_year, date_now)
+        )
+
+        lineup_ids = lineup.values("id")
+        lineup_member = LineupMember.objects.filter(lineup__in=lineup_ids)
+
+        top_members = (
+            lineup_member.values("member")
+            .annotate(total=Count("member"))
+            .order_by("-total")[:10]
+        )
+
+        member_ids = [item["member"] for item in top_members]
+        members = Member.objects.filter(id__in=member_ids)
+        
+
+        return Response(
+            {
+                "top_members": [
+                    {
+                        "name": member.name,
+                        "total-member": next(
+                            item["total"]
+                            for item in top_members
+                            if item["member"] == member.id
+                        )
+                        
+                    }
+                    for member in members
+                ]
+            },
+            status=status.HTTP_200_OK,
+        )

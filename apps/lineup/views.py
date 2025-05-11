@@ -5,6 +5,10 @@ from rest_framework import filters, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
+from django.db.models import Count
+from django.utils import timezone
 
 
 from apps.accounts.models import Member
@@ -67,6 +71,133 @@ class PraiseLineupViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response({"scales": serializer.data}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        method='get',
+        operation_description="Retorna total de escalas",
+        responses={
+            200: openapi.Response(
+                description="Lista de escalas",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "total": openapi.Schema(
+                            type=openapi.TYPE_INTEGER,
+                        )
+                    }
+                )
+            )
+        }
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="total-scales"
+        
+    )
+    def get_total_scales(self, request):
+        scales = PraiseLineup.objects.all()
+        
+        return Response({"total": scales.count()}, status=status.HTTP_200_OK)
+    
+    @swagger_auto_schema(
+    method='get',
+    operation_description="Retorna as próximas 5 escalas dentro de 6 meses a partir da data atual.",
+    responses={
+            200: openapi.Response(
+                description="Lista das próximas escalas",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "next-scales": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    "event": openapi.Schema(type=openapi.TYPE_STRING),
+                                    "date": openapi.Schema(type=openapi.TYPE_STRING, format="date")
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+        }
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="next-scales"
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="next-scales"
+        
+    )
+    def get_next_scales(self, request):
+        date_now = timezone.now()
+        date_next_months = date_now + relativedelta(months=6)
+        
+
+        lineups = PraiseLineup.objects.filter(
+            lineup_date__range=(date_now, date_next_months)
+        )[:5]
+        
+        return Response({"next-scales": [
+           {
+            "event": scale.lineup_event,
+            "date": scale.lineup_date
+           }
+            for scale in lineups
+        ]}, status=status.HTTP_200_OK)
+    
+    @swagger_auto_schema(
+    method='get',
+    operation_description="Retorna as últimas 5 escalas dos 6 meses anteriores à data atual.",
+    responses={
+            200: openapi.Response(
+                description="Lista das escalas anteriores",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "previous-scales": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    "event": openapi.Schema(type=openapi.TYPE_STRING),
+                                    "date": openapi.Schema(type=openapi.TYPE_STRING, format="date")
+                                }
+                            )
+                        )
+                    }
+                )
+            )
+        }
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="previous-scales"
+        
+    )
+    def get_previous_scales(self, request):
+        date_now = timezone.now()
+        date_previous_months = date_now - relativedelta(months=6)
+        
+
+        lineups = PraiseLineup.objects.filter(
+            lineup_date__range=(date_previous_months, date_now)
+        )[:5]
+        
+        return Response({"previous-scales": [
+           {
+            "event": scale.lineup_event,
+            "date": scale.lineup_date
+           }
+            for scale in lineups
+        ]}, status=status.HTTP_200_OK)
+
 
 class LineupMemberViewSet(viewsets.ModelViewSet):
     queryset = LineupMember.objects.all()
@@ -80,6 +211,7 @@ class LineupMemberViewSet(viewsets.ModelViewSet):
     ]
     ordering_fields = ["lineup__lineup_date", "lineup__lineup_event"]
     search_fields = ["member__name", "function__function_name"]
+
 
 class ScaleHistoryViewSet(APIView):
     @swagger_auto_schema(

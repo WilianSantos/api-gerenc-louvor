@@ -9,9 +9,17 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.db.models import Count
 from django.utils import timezone
+from pptx import Presentation
+from pptx.util import Inches, Pt
+from django.http import HttpResponse
+
+
 
 
 from apps.accounts.models import Member
+from apps.music.models import Music
+from apps.music.utils import extract_lyrics_without_chords, is_chord
+from apps.playlist.models import Playlist
 
 from .models import LineupMember, PraiseLineup
 from .serializers import LineupMemberSerializers, PraiseLineupSerializers
@@ -269,3 +277,111 @@ class ScaleHistoryViewSet(APIView):
             },
             status=status.HTTP_200_OK,
         )
+    
+
+
+class SlideGeneratorView(APIView):
+    @swagger_auto_schema(
+        operation_description="Gera e retorna um arquivo .pptx com as músicas da playlist (sem acordes).",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["playlist_id"],
+            properties={
+                "playlist_id": openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description="ID da playlist cujas músicas serão usadas para gerar os slides"
+                )
+            }
+        ),
+        responses={
+            200: openapi.Response(
+                description="Arquivo .pptx com os slides das músicas",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    format='binary'  # <- indica que é um arquivo
+                )
+            ),
+            400: openapi.Response(description="ID da playlist não foi informado."),
+            404: openapi.Response(description="Playlist não encontrada.")
+        }
+    )
+    def post(self, request):
+        playlist_id = request.data.get("playlist_id")
+        if not playlist_id:
+            return Response({"playlist_id": "ID não foi passado"}, status=400)
+        
+        try:
+            playlist = Playlist.objects.get(id=playlist_id)
+        except Playlist.DoesNotExist:
+            return Response({"detail": "Playlist não encontrada"}, status=404)
+
+        through_model = playlist.music.through  # acesso à tabela M2M
+
+        musics = (
+            through_model.objects
+            .values("music")
+        )
+        music_ids = [music["music"] for music in musics]
+        music_list = Music.objects.filter(id__in=music_ids)
+        # Cria uma nova apresentação
+        prs = Presentation()
+        title_slide_layout = prs.slide_layouts[5]  # Layout em branco
+
+        # Gera slides para cada música
+        for music in music_list:
+            # Extrai letras sem acordes
+            music_text = extract_lyrics_without_chords(music.music_text)
+            lines = music_text.strip().split('\n')  # cada linha separada
+
+            # Controla o número de slides para esta música
+            slide_count = 0
+            lines_on_current_slide = 0
+
+            # Cria o primeiro slide para a música
+            slide = prs.slides.add_slide(title_slide_layout)
+            slide_count += 1
+            
+            # Adiciona título no primeiro slide
+            title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
+            title_tf = title_box.text_frame
+            title_tf.text = f"{music.music_title} - {music.author}"
+            title_tf.paragraphs[0].font.size = Pt(32)
+            title_tf.paragraphs[0].font.bold = True
+
+            # Adiciona texto do slide
+            textbox = slide.shapes.add_textbox(Inches(0.5), Inches(2), Inches(9), Inches(5.5))
+            tf = textbox.text_frame
+            tf.word_wrap = True
+
+            # Itera sobre todas as linhas da música
+            for line in lines:
+                # Se já foram adicionadas 5 linhas, cria um novo slide
+                if lines_on_current_slide >= 5:
+                    slide = prs.slides.add_slide(title_slide_layout)
+                    slide_count += 1
+                    
+                    # Reseta o textbox para o novo slide
+                    textbox = slide.shapes.add_textbox(Inches(0.5), Inches(2), Inches(9), Inches(5.5))
+                    tf = textbox.text_frame
+                    tf.word_wrap = True
+                    
+                    # Reseta o contador de linhas
+                    lines_on_current_slide = 0
+
+                # Adiciona a linha ao slide atual
+                if line.strip():
+                    text = ''
+                    for t in line.split():
+                        if not is_chord(t):
+                            text += t + ' '
+                    p = tf.add_paragraph()
+                    p.text = text.strip()
+                    p.font.size = Pt(24)
+                    lines_on_current_slide += 1
+
+        # Salva a apresentação
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.presentationml.presentation')
+        response['Content-Disposition'] = 'attachment; filename="culto_slides.pptx"'
+        prs.save(response)
+        return response
+    

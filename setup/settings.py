@@ -38,7 +38,12 @@ SECRET_KEY = str(os.getenv("SECRET_KEY_DJANGO"))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "nextjs-worship-site.vercel.app",
+    "84e6-143-255-126-18.ngrok-free.app",
+]
 
 
 # Application definition
@@ -107,8 +112,8 @@ DATABASES = {
         "NAME": os.getenv("DATABASE_NAME", "praise_management_api"),
         "USER": os.getenv("DATABASE_USER", "root"),
         "PASSWORD": os.getenv("PASSWORD_MYSQL", ""),
-        # "HOST": os.getenv('DATABASE_HOST', 'db-praise-api'),  # 'db' é o nome do serviço no docker-compose
-        "PORT": os.getenv("DATABASE_PORT", "3307"),
+        "HOST": os.getenv('DATABASE_HOST', 'db-praise-api'),  # 'db' é o nome do serviço no docker-compose
+        "PORT": os.getenv("DATABASE_PORT", "3306"),
     }
 }
 
@@ -116,7 +121,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6380/1",
+        "LOCATION": f"redis://{os.getenv('DATABASE_HOST_REDIS', 'redis-praise-api')}:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": os.getenv("PASSWORD_REDIS", ""),
@@ -196,6 +201,10 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
+    "AUTH_COOKIE": "access_token",
+    "AUTH_COOKIE_SECURE": True,
+    "AUTH_COOKIE_HTTP_ONLY": True,
+    "AUTH_COOKIE_SAMESITE": "None",
 }
 
 
@@ -209,19 +218,31 @@ TINYMCE_SPELLCHECKER = True
 TINYMCE_COMPRESSOR = True
 
 # Configurações do CORS
-CORS_ALLOW_ALL_ORIGINS = False  
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+
 CORS_ALLOWED_ORIGINS = [
-    str(os.getenv('FRONTEND_URL'))
+    'https://nextjs-worship-site.vercel.app',
+    'https://84e6-143-255-126-18.ngrok-free.app',
+    str(os.getenv('FRONTEND_URL')),  # certifique-se que FRONTEND_URL está definido
 ]
+
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'authorization',
     'x-csrftoken',
-    'access-control-allow-origin',
 ]
 
 CORS_ALLOW_METHODS = list(default_methods) + ['POST', 'OPTIONS']
+
+# Permite envio de cookies entre domínios
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
 
 # Configuração do email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -31,7 +31,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Member, MemberFunctions
 from .serializers import (ChangePasswordSerializer,
-                          SendEmailResponseSerializer,
+                          SendEmailResponseSerializer, MessageSerializer,
                           MemberFunctionsSerializers, MemberSerializer, MemberMeSerializer,
                           PasswordResetSerializer, RegisterUserSerializer, SendEmailSerializer,
                           RequestPasswordResetSerializer, UserSerializers, TokenVerificationSerializer)
@@ -109,8 +109,7 @@ class MemberMeView(APIView):
     @swagger_auto_schema(
         operation_description="Rota para buscar membro logado.",
         responses={
-            200: MemberMeSerializer,
-            404: openapi.Response(description="Usuário não é um membro."),
+            200: openapi.Response(description="Retorna os dados do membro",schema=MemberMeSerializer)
         },
     )
     def get(self, request, *args, **kwargs):
@@ -139,45 +138,61 @@ class MemberMeListView(ListAPIView):
 
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
-
+    
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
+        
         if response.status_code == 200:
             access = response.data["access"]
             refresh = response.data["refresh"]
-
-            # Define cookie com o token
+            
+            response.data = {"detail": "Login realizado com sucesso"}
+            
+            # Define cookie com o token de acesso
             response.set_cookie(
                 key="access_token",
                 value=access,
                 httponly=True,  # importante: impede acesso via JS
-                secure=False,  # true se estiver em HTTPS
-                samesite="Lax",  # ou 'Strict' ou 'None' se for cross-domain
-                max_age=60 * 10,  # 10 minutos, por exemplo
-                # domain='.meusite.com'
+                secure=True,  # Automaticamente True em prod e False em dev
+                samesite="None",  # Automaticamente ajustado com base na origem
+                max_age=60 * 10,  # 10 minutos
+                path="/",  # Importante para garantir que o cookie esteja disponível em todo o site
             )
+            
             # Define cookie com o refresh token
             response.set_cookie(
                 key="refresh_token",
                 value=refresh,
                 httponly=True,  # importante: impede acesso via JS
-                secure=False,  # true se estiver em HTTPS
-                samesite="Lax",  # ou 'Strict' ou 'None' se for cross-domain
-                max_age=60 * 60 * 24 * 5,  # 5 dias, por exemplo
+                secure=True,  # Automaticamente True em prod e False em dev
+                samesite="None",  # Automaticamente ajustado com base na origem
+                max_age=60 * 60 * 24 * 5,  # 5 dias
+                path="/",  # Importante para garantir que o cookie esteja disponível em todo o site
             )
-
+            
+            response["Access-Control-Allow-Credentials"] = "true"
+                
+        
         return response
 
 
 class LogoutView(APIView):
+    @swagger_auto_schema(
+        operation_description="Rota para realizar logout do usuário removendo os cookies de autenticação.",
+        responses={
+            205: openapi.Response(description="Remoção dos cookies concluida",
+                schema=MessageSerializer
+            )
+        }
+    )
     def post(self, request):
         response = Response(
             {"detail": "Logout realizado com sucesso"},
             status=status.HTTP_205_RESET_CONTENT,
         )
 
-        response.delete_cookie("access_token")
-        response.delete_cookie("refresh_token")
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
 
         return response
 
@@ -215,8 +230,7 @@ class ChangePasswordView(APIView):
         operation_description="Rota para mudar senha com token.",
         request_body=ChangePasswordSerializer,
         responses={
-            400: openapi.Response("detail"),
-            204: openapi.Response("Sem conteúdo."),
+            201: openapi.Response(schema=MessageSerializer, description="Senha alterada")
         },
     )
     def post(self, request, *args, **kwargs):
@@ -227,7 +241,7 @@ class ChangePasswordView(APIView):
             # Verificar a senha antiga
             if not user.check_password(serializer.validated_data["old_password"]):
                 return Response(
-                    {"detail": "Senha antiga incorreta."},
+                    {"old_password": "Senha antiga incorreta."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -235,7 +249,7 @@ class ChangePasswordView(APIView):
             user.set_password(serializer.validated_data["new_password"])
             user.save()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({"detail": "Senha alterada com sucesso"},status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -248,7 +262,7 @@ class RequestPasswordResetView(APIView):
     @swagger_auto_schema(
         operation_description="Rota para gerar um token para redefinir a senha",
         request_body=RequestPasswordResetSerializer,
-        responses={201: openapi.Response("token"), 400: openapi.Response("detail")},
+        responses={201: openapi.Response(schema=MessageSerializer, description="E-mail enviado")},
     )
     def post(self, request):
         serializer = RequestPasswordResetSerializer(data=request.data)
@@ -257,7 +271,7 @@ class RequestPasswordResetView(APIView):
 
             if not username:
                 raise Response(
-                    {"detail": "Usuário não enviado."},
+                    {"username": "Usuário não enviado."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -265,22 +279,59 @@ class RequestPasswordResetView(APIView):
             if not user:
                 raise Response(
                     {
-                        "detail": "Usuário não coresponde com nenhum usuário na base de dados."
+                        "username": "Usuário não coresponde com nenhum usuário na base de dados."
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            refresh = RefreshToken.for_user(user)
-            reset_token = refresh.access_token
-            reset_token["purpose"] = "password_reset"
-            reset_token["user_id"] = user.id
-            reset_token.set_exp(lifetime=timedelta(hours=1))
-
             email = user.email
 
+            from_email = getattr(settings, "EMAIL_HOST_USER", None)
+            if not from_email:
+                raise Response(
+                    {'detail': 'E-mail host não configurado.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            try:
+                refresh = RefreshToken.for_user(user)
+                reset_token = refresh.access_token
+                reset_token["purpose"] = "password_reset"
+                reset_token["user_id"] = user.id
+                reset_token.set_exp(lifetime=timedelta(hours=1))
+                
+                token = generate_email_token(email)
+                link = f"{settings.FRONTEND_URL}/login?token={token}&reset_token={reset_token}"
+
+                context = {
+                    "subject": "Redefinir senha",
+                    "message": """
+                    Olá,
+
+                    Para atualizar sua senha acesse o link a baixo.
+                    """,
+                    "link": link,
+                    "link_expired": "Este convite expira em 1 hora.",
+                }
+
+                html_content = render_to_string("emails/invitation_email.html", context)
+                send_email = EmailMultiAlternatives(
+                    subject=context["subject"],
+                    body=f"Seu e-mail não suporta HTML. Clique no link para redefinir sua senha: {link}",
+                    from_email=from_email,
+                    to=[email]
+                )
+                send_email.attach_alternative(html_content, "text/html")
+                send_email.send()
+                
+            except Exception as e:
+                return Response({
+                    "detail": str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             return Response(
-                {"token": str(reset_token), "email": email},
-                status=status.HTTP_201_CREATED,
+                {"detail": "E-mail enviado"},
+                status=status.HTTP_201_CREATED
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -295,8 +346,7 @@ class PasswordResetView(APIView):
         operation_description="Rota para redefinir a senha",
         request_body=PasswordResetSerializer,
         responses={
-            204: openapi.Response("Sem conteudo"),
-            400: openapi.Response("detail"),
+            201: openapi.Response(schema=MessageSerializer, description="Senha alterada") 
         },
     )
     def post(self, request):
@@ -332,7 +382,7 @@ class PasswordResetView(APIView):
                 user.set_password(new_password)
                 user.save()
 
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                return Response({"detail": "Senha alterada"},status=status.HTTP_201_CREATED)
 
             except TokenError as e:
                 return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -347,7 +397,7 @@ class RegisterUserView(APIView):
     @swagger_auto_schema(
         operation_description="Rota para registrar o usuário.",
         request_body=RegisterUserSerializer,
-        responses={201: openapi.Response("user_id"), 400: openapi.Response("detail")},
+        responses={201: openapi.Response(schema=SendEmailResponseSerializer, description="Usuario criado")},
     )
     def post(self, request):
         serializer = RegisterUserSerializer(data=request.data)
@@ -407,7 +457,7 @@ class RegisterUserView(APIView):
                 name=name, cell_phone=cell_phone, user=user
             )
 
-            return Response(status=status.HTTP_201_CREATED)
+            return Response({"detail": "Usuario criado"},status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -416,14 +466,9 @@ class SendRegistrationEmailView(APIView):
     @swagger_auto_schema(
         operation_summary="Enviar convites por e-mail",
         operation_description="Recebe uma lista de e-mails e envia convites personalizados com um link de registro.",
-        request_body=SendEmailSerializer,
+        query_serializer=SendEmailSerializer,
         responses={
-            200: openapi.Response(
-                description="Convites enviados",
-                schema=SendEmailResponseSerializer
-            ),
-            400: "Erro de validação nos dados de entrada",
-            500: "Erro interno ao enviar os convites"
+            200: openapi.Response(schema=SendEmailResponseSerializer, description="E-mails enviado")   
         }
     )
     def post(self, request):
@@ -504,14 +549,13 @@ class VerifyRegistrationTokenView(APIView):
             200: openapi.Response(
                 description="Token válido",
                 schema=TokenVerificationSerializer
-            ),
-            400: "Token inválido ou expirado"
+            )
         }
     )
     def get(self, request):
         token = request.query_params.get('token')
         if not token:
-            return Response({'error': 'Token ausente'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Token ausente'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             email = verify_email_token(token)

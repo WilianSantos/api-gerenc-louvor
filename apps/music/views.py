@@ -11,7 +11,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import fitz  # pymupdf
 
-from apps.lineup import serializers
+
 from apps.lineup.models import PraiseLineup
 from apps.playlist.models import Playlist
 
@@ -120,8 +120,7 @@ class MusicViewSet(viewsets.ModelViewSet):
                         )
                     }
                 )
-            ),
-            400: "Arquivo inválido ou erro ao processar PDF."
+            )
         }
     )
     @action(

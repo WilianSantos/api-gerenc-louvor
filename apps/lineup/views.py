@@ -13,9 +13,6 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 from django.http import HttpResponse
 
-
-
-
 from apps.accounts.models import Member
 from apps.music.models import Music
 from apps.music.utils import extract_lyrics_without_chords, is_chord
@@ -277,7 +274,6 @@ class ScaleHistoryViewSet(APIView):
             },
             status=status.HTTP_200_OK,
         )
-    
 
 
 class SlideGeneratorView(APIView):
@@ -300,9 +296,7 @@ class SlideGeneratorView(APIView):
                     type=openapi.TYPE_STRING,
                     format='binary'  # <- indica que é um arquivo
                 )
-            ),
-            400: openapi.Response(description="ID da playlist não foi informado."),
-            404: openapi.Response(description="Playlist não encontrada.")
+            )
         }
     )
     def post(self, request):
@@ -376,7 +370,7 @@ class SlideGeneratorView(APIView):
                             text += t + ' '
                     p = tf.add_paragraph()
                     p.text = text.strip()
-                    p.font.size = Pt(24)
+                    p.font.size = Pt(30)
                     lines_on_current_slide += 1
 
         # Salva a apresentação

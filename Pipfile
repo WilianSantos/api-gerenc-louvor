@@ -23,6 +23,7 @@ python-dateutil = "*"
 drf-writable-nested = "*"
 pymupdf = "*"
 pychord = "*"
+python-pptx = "*"
 
 [dev-packages]
 isort = "*"

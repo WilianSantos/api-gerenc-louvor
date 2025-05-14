@@ -119,3 +119,6 @@ class SendEmailResponseSerializer(serializers.Serializer):
         help_text="Lista de e-mails que falharam com detalhes do erro."
     )
 
+class MessageSerializer(serializers.Serializer):
+    detail = serializers.CharField(help_text="Mensagem de informação")
+

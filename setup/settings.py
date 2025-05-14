@@ -36,9 +36,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = str(os.getenv("SECRET_KEY_DJANGO"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = ["*", os.getenv("RAILWAY_PUBLIC_DOMAIN", "localhost")]
+ALLOWED_HOSTS = [str(os.getenv("ALLOWED_HOSTS"))]
 
 
 

@@ -36,14 +36,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = str(os.getenv("SECRET_KEY_DJANGO"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "nextjs-worship-site.vercel.app",
-    "84e6-143-255-126-18.ngrok-free.app",
-]
+ALLOWED_HOSTS = ["*", os.getenv("RAILWAY_PUBLIC_DOMAIN", "localhost")]
+
 
 
 # Application definition
@@ -109,25 +105,25 @@ WSGI_APPLICATION = "setup.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("DATABASE_NAME", "praise_management_api"),
-        "USER": os.getenv("DATABASE_USER", "root"),
-        "PASSWORD": os.getenv("PASSWORD_MYSQL", ""),
-        "HOST": os.getenv('DATABASE_HOST', 'db-praise-api'),  # 'db' é o nome do serviço no docker-compose
+        "NAME": os.getenv("DATABASE_NAME"),
+        "USER": os.getenv("DATABASE_USER"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST"),
         "PORT": os.getenv("DATABASE_PORT", "3306"),
     }
 }
 
-# Redis caches
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{os.getenv('DATABASE_HOST_REDIS', 'redis-praise-api')}:6379/1",
+        "LOCATION": os.getenv("REDIS_URL"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": os.getenv("PASSWORD_REDIS", ""),
+            "PASSWORD": os.getenv("PASSWORD_REDIS"),
         },
     }
 }
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 

@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6380:6379"
+    command: ["redis-server", "--requirepass", "${PASSWORD_REDIS}"]
+    volumes:
+      - redis_data:/data
+
+  api:
+    build: .
+    command: gunicorn praise_project.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+
+volumes:
+  db_data:
+  redis_data:

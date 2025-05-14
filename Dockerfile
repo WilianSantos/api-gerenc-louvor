@@ -20,3 +20,6 @@ COPY Pipfile Pipfile.lock /app/
 RUN pipenv install --deploy --system
 
 COPY . /app/
+
+
+CMD ["gunicorn", "setup.wsgi:application", "--bind", "0.0.0.0:8000"]

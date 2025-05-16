@@ -1,8 +1,7 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
-
 from drf_writable_nested.serializers import WritableNestedModelSerializer
+from rest_framework import serializers
 
 from .models import Member, MemberFunctions
 
@@ -16,7 +15,7 @@ class UserSerializers(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
-    
+
     # def validate_username(self, value):
     #     user = self.context['request'].user
     #     # Verifica se o nome de usuário já existe, excluindo o usuário atual
@@ -32,7 +31,7 @@ class MemberFunctionsSerializers(serializers.ModelSerializer):
 
 
 class MemberSerializer(WritableNestedModelSerializer):
-    
+
     class Meta:
         model = Member
         fields = "__all__"
@@ -47,7 +46,7 @@ class MemberMeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = '__all__'
+        fields = "__all__"
 
     def get_profile_picture(self, obj):
         request = self.context.get("request")
@@ -82,7 +81,6 @@ class PasswordResetSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
 
 
-
 class RegisterUserSerializer(serializers.Serializer):
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
@@ -92,33 +90,35 @@ class RegisterUserSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     cell_phone = serializers.CharField()
     token = serializers.CharField(required=True, max_length=500)
-    
+
 
 class SendEmailSerializer(serializers.Serializer):
     emails = serializers.ListField(
         child=serializers.EmailField(),
         allow_empty=False,
-        help_text="Lista de e-mails para os quais o convite será enviado."
+        help_text="Lista de e-mails para os quais o convite será enviado.",
     )
+
 
 class TokenVerificationSerializer(serializers.Serializer):
     valid = serializers.BooleanField(help_text="Indica se o token é válido.")
-    email = serializers.EmailField(help_text="Email associado ao token válido.", required=False)
-    detail = serializers.CharField(help_text="Mensagem de erro, caso o token seja inválido.", required=False)
+    email = serializers.EmailField(
+        help_text="Email associado ao token válido.", required=False
+    )
+    detail = serializers.CharField(
+        help_text="Mensagem de erro, caso o token seja inválido.", required=False
+    )
 
 
 class SendEmailResponseSerializer(serializers.Serializer):
     sent = serializers.ListField(
-        child=serializers.EmailField(),
-        help_text="E-mails enviados com sucesso."
+        child=serializers.EmailField(), help_text="E-mails enviados com sucesso."
     )
     failed = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.CharField()
-        ),
-        help_text="Lista de e-mails que falharam com detalhes do erro."
+        child=serializers.DictField(child=serializers.CharField()),
+        help_text="Lista de e-mails que falharam com detalhes do erro.",
     )
+
 
 class MessageSerializer(serializers.Serializer):
     detail = serializers.CharField(help_text="Mensagem de informação")
-

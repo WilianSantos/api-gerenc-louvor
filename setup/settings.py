@@ -12,18 +12,13 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 # Importe para acessar os arquivos entre as pastas do sitemas
 import os
+from datetime import timedelta
 from pathlib import Path
 
-# Importação e carregamento do arquivo env do projeto
+from corsheaders.defaults import default_headers, default_methods
 from dotenv import load_dotenv
 
 load_dotenv()
-
-from datetime import timedelta
-
-from django.conf import settings
-
-from corsheaders.defaults import default_headers, default_methods
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,15 +31,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = str(os.getenv("SECRET_KEY_DJANGO"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "nextjs-worship-site.vercel.app",
-    "84e6-143-255-126-18.ngrok-free.app",
-]
-
+ALLOWED_HOSTS = [str(os.getenv("ALLOWED_HOSTS"))]
 
 # Application definition
 
@@ -88,7 +77,7 @@ ROOT_URLCONF = "setup.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, 'templates')],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -112,8 +101,8 @@ DATABASES = {
         "NAME": os.getenv("DATABASE_NAME", "praise_management_api"),
         "USER": os.getenv("DATABASE_USER", "root"),
         "PASSWORD": os.getenv("PASSWORD_MYSQL", ""),
-        "HOST": os.getenv('DATABASE_HOST', 'db-praise-api'),  # 'db' é o nome do serviço no docker-compose
-        "PORT": os.getenv("DATABASE_PORT", "3306"),
+        # "HOST": os.getenv('DATABASE_HOST', 'db-praise-api'),  # 'db' é o nome do serviço no docker-compose
+        "PORT": os.getenv("DATABASE_PORT", "3307"),
     }
 }
 
@@ -121,13 +110,14 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{os.getenv('DATABASE_HOST_REDIS', 'redis-praise-api')}:6379/1",
+        "LOCATION": "redis://localhost:6380/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": os.getenv("PASSWORD_REDIS", ""),
         },
     }
 }
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
@@ -190,7 +180,7 @@ REST_FRAMEWORK = {
         "user": "1000/day",  # Limita 1000 requisições por dia para usuários autenticados
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10
+    "PAGE_SIZE": 10,
 }
 
 
@@ -220,22 +210,22 @@ TINYMCE_COMPRESSOR = True
 # Configurações do CORS
 CORS_ALLOW_ALL_ORIGINS = False
 
-CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 CORS_ALLOWED_ORIGINS = [
-    'https://nextjs-worship-site.vercel.app',
-    'https://84e6-143-255-126-18.ngrok-free.app',
-    str(os.getenv('FRONTEND_URL')),  # certifique-se que FRONTEND_URL está definido
+    "https://nextjs-worship-site.vercel.app",
+    "https://84e6-143-255-126-18.ngrok-free.app",
+    str(os.getenv("FRONTEND_URL")),  # certifique-se que FRONTEND_URL está definido
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
-    'authorization',
-    'x-csrftoken',
+    "authorization",
+    "x-csrftoken",
 ]
 
-CORS_ALLOW_METHODS = list(default_methods) + ['POST', 'OPTIONS']
+CORS_ALLOW_METHODS = list(default_methods) + ["POST", "OPTIONS"]
 
 # Permite envio de cookies entre domínios
 SESSION_COOKIE_SAMESITE = "None"
@@ -245,11 +235,11 @@ CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
 
 # Configuração do email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = str(os.getenv('EMAIL_HOST'))
-EMAIL_PORT = os.getenv('EMAIL_PORT')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
-EMAIL_HOST_USER = str(os.getenv('EMAIL_HOST_USER'))
-EMAIL_HOST_PASSWORD = str(os.getenv('EMAIL_HOST_PASSWORD'))
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = str(os.getenv("EMAIL_HOST"))
+EMAIL_PORT = os.getenv("EMAIL_PORT")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
+EMAIL_HOST_USER = str(os.getenv("EMAIL_HOST_USER"))
+EMAIL_HOST_PASSWORD = str(os.getenv("EMAIL_HOST_PASSWORD"))
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-FRONTEND_URL = str(os.getenv('FRONTEND_URL'))
+FRONTEND_URL = str(os.getenv("FRONTEND_URL"))

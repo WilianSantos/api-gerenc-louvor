@@ -24,6 +24,9 @@ drf-writable-nested = "*"
 pymupdf = "*"
 pychord = "*"
 python-pptx = "*"
+isort = "*"
+flake8 = "*"
+black = "*"
 
 [dev-packages]
 isort = "*"

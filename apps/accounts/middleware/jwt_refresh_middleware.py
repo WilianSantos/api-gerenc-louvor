@@ -15,26 +15,31 @@ class RefreshTokenMiddleware(MiddlewareMixin):
 
                 # Criar nova resposta
                 new_response = JsonResponse({"detail": "Token renovado"})
-                
+
                 # Transferir cabeçalhos CORS da resposta original para a nova resposta
                 cors_headers = [
-                    'Access-Control-Allow-Origin',
-                    'Access-Control-Allow-Methods',
-                    'Access-Control-Allow-Headers',
-                    'Access-Control-Allow-Credentials',
-                    'Access-Control-Expose-Headers',
-                    'Access-Control-Max-Age',
+                    "Access-Control-Allow-Origin",
+                    "Access-Control-Allow-Methods",
+                    "Access-Control-Allow-Headers",
+                    "Access-Control-Allow-Credentials",
+                    "Access-Control-Expose-Headers",
+                    "Access-Control-Max-Age",
                 ]
-                
+
                 for header in cors_headers:
                     if header in response:
                         new_response[header] = response[header]
-                
+
                 # Definir cabeçalho CORS explicitamente caso a origem seja de Vercel
-                if 'Origin' in request.headers and 'vercel' in request.headers['Origin']:
-                    new_response['Access-Control-Allow-Origin'] = request.headers['Origin']
-                    new_response['Access-Control-Allow-Credentials'] = 'true'
-                
+                if (
+                    "Origin" in request.headers
+                    and "vercel" in request.headers["Origin"]
+                ):
+                    new_response["Access-Control-Allow-Origin"] = request.headers[
+                        "Origin"
+                    ]
+                    new_response["Access-Control-Allow-Credentials"] = "true"
+
                 # Configurar cookie
                 new_response.set_cookie(
                     key="access_token",
@@ -52,26 +57,31 @@ class RefreshTokenMiddleware(MiddlewareMixin):
                 new_response = JsonResponse(
                     {"detail": "Sessão expirada. Faça login novamente."}, status=401
                 )
-                
-                # Transferir cabeçalhos CORS da resposta original para a nova resposta 
+
+                # Transferir cabeçalhos CORS da resposta original para a nova resposta
                 cors_headers = [
-                    'Access-Control-Allow-Origin',
-                    'Access-Control-Allow-Methods',
-                    'Access-Control-Allow-Headers',
-                    'Access-Control-Allow-Credentials',
-                    'Access-Control-Expose-Headers',
-                    'Access-Control-Max-Age',
+                    "Access-Control-Allow-Origin",
+                    "Access-Control-Allow-Methods",
+                    "Access-Control-Allow-Headers",
+                    "Access-Control-Allow-Credentials",
+                    "Access-Control-Expose-Headers",
+                    "Access-Control-Max-Age",
                 ]
-                
+
                 for header in cors_headers:
                     if header in response:
                         new_response[header] = response[header]
-                
+
                 # Definir cabeçalho CORS explicitamente caso a origem seja de Vercel
-                if 'Origin' in request.headers and 'vercel' in request.headers['Origin']:
-                    new_response['Access-Control-Allow-Origin'] = request.headers['Origin']
-                    new_response['Access-Control-Allow-Credentials'] = 'true'
-                
+                if (
+                    "Origin" in request.headers
+                    and "vercel" in request.headers["Origin"]
+                ):
+                    new_response["Access-Control-Allow-Origin"] = request.headers[
+                        "Origin"
+                    ]
+                    new_response["Access-Control-Allow-Credentials"] = "true"
+
                 new_response.delete_cookie("access_token")
                 new_response.delete_cookie("refresh_token")
                 return new_response

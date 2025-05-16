@@ -1,6 +1,6 @@
-from tinymce.models import HTMLField
 from django.contrib.auth.models import User
 from django.db import models
+from tinymce.models import HTMLField
 
 
 class TimeStampedModel(models.Model):
@@ -19,7 +19,7 @@ class MemberFunctions(models.Model):
 
     def __str__(self):
         return self.function_name
-    
+
     class Meta:
         ordering = ["function_name"]
 

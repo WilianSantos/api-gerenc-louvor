@@ -6,6 +6,7 @@ from .models import LineupMember, PraiseLineup
 class PraiseLineupSerializers(serializers.ModelSerializer):
     playlist_display = serializers.SerializerMethodField()
     playlist_link_display = serializers.SerializerMethodField()
+
     class Meta:
         model = PraiseLineup
         fields = "__all__"
@@ -30,5 +31,3 @@ class LineupMemberSerializers(serializers.ModelSerializer):
 
     def get_function_display(self, obj):
         return obj.get_function_display()
-
-    

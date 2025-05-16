@@ -1,40 +1,46 @@
 from datetime import timedelta
+
 from dateutil.relativedelta import relativedelta
-from django.db.models import Count
-from django.utils import timezone
-
 from django.conf import settings
-
-from apps.lineup.models import LineupMember, PraiseLineup
-
-from .utils import generate_email_token, verify_email_token
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
 from django.contrib.auth.models import User
+from django.core.mail import EmailMultiAlternatives
+from django.db.models import Count
+from django.template.loader import render_to_string
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import (AccessToken, RefreshToken,
-                                             UntypedToken)
-from rest_framework_simplejwt.views import (TokenObtainPairView,
-                                            TokenRefreshView)
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, UntypedToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from apps.lineup.models import LineupMember, PraiseLineup
 
 from .models import Member, MemberFunctions
-from .serializers import (ChangePasswordSerializer,
-                          SendEmailResponseSerializer, MessageSerializer,
-                          MemberFunctionsSerializers, MemberSerializer, MemberMeSerializer,
-                          PasswordResetSerializer, RegisterUserSerializer, SendEmailSerializer,
-                          RequestPasswordResetSerializer, UserSerializers, TokenVerificationSerializer)
+from .serializers import (
+    ChangePasswordSerializer,
+    MemberFunctionsSerializers,
+    MemberMeSerializer,
+    MemberSerializer,
+    MessageSerializer,
+    PasswordResetSerializer,
+    RegisterUserSerializer,
+    RequestPasswordResetSerializer,
+    SendEmailResponseSerializer,
+    SendEmailSerializer,
+    TokenVerificationSerializer,
+    UserSerializers,
+)
+from .utils import generate_email_token, verify_email_token
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -77,7 +83,7 @@ class MemberViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name"]
 
     @swagger_auto_schema(
-        method='get',
+        method="get",
         operation_description="Retorna o numero de membros",
         responses={
             200: openapi.Response(
@@ -88,20 +94,15 @@ class MemberViewSet(viewsets.ModelViewSet):
                         "total": openapi.Schema(
                             type=openapi.TYPE_INTEGER,
                         )
-                    }
-                )
+                    },
+                ),
             )
-        }
+        },
     )
-    @action(
-        detail=False,
-        methods=["get"],
-        url_path="total-member"
-        
-    )
+    @action(detail=False, methods=["get"], url_path="total-member")
     def get_total_member(self, request):
         members = Member.objects.all()
-        
+
         return Response({"total": members.count()}, status=status.HTTP_200_OK)
 
 
@@ -109,7 +110,9 @@ class MemberMeView(APIView):
     @swagger_auto_schema(
         operation_description="Rota para buscar membro logado.",
         responses={
-            200: openapi.Response(description="Retorna os dados do membro",schema=MemberMeSerializer)
+            200: openapi.Response(
+                description="Retorna os dados do membro", schema=MemberMeSerializer
+            )
         },
     )
     def get(self, request, *args, **kwargs):
@@ -121,7 +124,7 @@ class MemberMeView(APIView):
             return Response(
                 {"detail": "Usuário não é um membro."}, status=status.HTTP_404_NOT_FOUND
             )
-        
+
 
 class MemberMeListView(ListAPIView):
     queryset = Member.objects.all()
@@ -134,45 +137,44 @@ class MemberMeListView(ListAPIView):
     ]
     ordering_fields = ["name"]
     search_fields = ["name", "function__function_name"]
-        
+
 
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
-    
+
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-        
+
         if response.status_code == 200:
             access = response.data["access"]
             refresh = response.data["refresh"]
-            
+
             response.data = {"detail": "Login realizado com sucesso"}
-            
+
             # Define cookie com o token de acesso
             response.set_cookie(
                 key="access_token",
                 value=access,
-                httponly=True,  # importante: impede acesso via JS
-                secure=True,  # Automaticamente True em prod e False em dev
-                samesite="None",  # Automaticamente ajustado com base na origem
+                httponly=True,  
+                secure=True,  
+                samesite="None",  
                 max_age=60 * 10,  # 10 minutos
-                path="/",  # Importante para garantir que o cookie esteja disponível em todo o site
+                path="/",  
             )
-            
+
             # Define cookie com o refresh token
             response.set_cookie(
                 key="refresh_token",
                 value=refresh,
-                httponly=True,  # importante: impede acesso via JS
-                secure=True,  # Automaticamente True em prod e False em dev
-                samesite="None",  # Automaticamente ajustado com base na origem
+                httponly=False,  
+                secure=False,  
+                samesite="None",  
                 max_age=60 * 60 * 24 * 5,  # 5 dias
-                path="/",  # Importante para garantir que o cookie esteja disponível em todo o site
+                path="/",  
             )
-            
+
             response["Access-Control-Allow-Credentials"] = "true"
-                
-        
+
         return response
 
 
@@ -180,10 +182,10 @@ class LogoutView(APIView):
     @swagger_auto_schema(
         operation_description="Rota para realizar logout do usuário removendo os cookies de autenticação.",
         responses={
-            205: openapi.Response(description="Remoção dos cookies concluida",
-                schema=MessageSerializer
+            205: openapi.Response(
+                description="Remoção dos cookies concluida", schema=MessageSerializer
             )
-        }
+        },
     )
     def post(self, request):
         response = Response(
@@ -230,7 +232,9 @@ class ChangePasswordView(APIView):
         operation_description="Rota para mudar senha com token.",
         request_body=ChangePasswordSerializer,
         responses={
-            201: openapi.Response(schema=MessageSerializer, description="Senha alterada")
+            201: openapi.Response(
+                schema=MessageSerializer, description="Senha alterada"
+            )
         },
     )
     def post(self, request, *args, **kwargs):
@@ -249,7 +253,9 @@ class ChangePasswordView(APIView):
             user.set_password(serializer.validated_data["new_password"])
             user.save()
 
-            return Response({"detail": "Senha alterada com sucesso"},status=status.HTTP_201_CREATED)
+            return Response(
+                {"detail": "Senha alterada com sucesso"}, status=status.HTTP_201_CREATED
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -262,7 +268,11 @@ class RequestPasswordResetView(APIView):
     @swagger_auto_schema(
         operation_description="Rota para gerar um token para redefinir a senha",
         request_body=RequestPasswordResetSerializer,
-        responses={201: openapi.Response(schema=MessageSerializer, description="E-mail enviado")},
+        responses={
+            201: openapi.Response(
+                schema=MessageSerializer, description="E-mail enviado"
+            )
+        },
     )
     def post(self, request):
         serializer = RequestPasswordResetSerializer(data=request.data)
@@ -289,8 +299,8 @@ class RequestPasswordResetView(APIView):
             from_email = getattr(settings, "EMAIL_HOST_USER", None)
             if not from_email:
                 raise Response(
-                    {'detail': 'E-mail host não configurado.'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    {"detail": "E-mail host não configurado."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
             try:
@@ -299,7 +309,7 @@ class RequestPasswordResetView(APIView):
                 reset_token["purpose"] = "password_reset"
                 reset_token["user_id"] = user.id
                 reset_token.set_exp(lifetime=timedelta(hours=1))
-                
+
                 token = generate_email_token(email)
                 link = f"{settings.FRONTEND_URL}/login?token={token}&reset_token={reset_token}"
 
@@ -319,19 +329,16 @@ class RequestPasswordResetView(APIView):
                     subject=context["subject"],
                     body=f"Seu e-mail não suporta HTML. Clique no link para redefinir sua senha: {link}",
                     from_email=from_email,
-                    to=[email]
+                    to=[email],
                 )
                 send_email.attach_alternative(html_content, "text/html")
                 send_email.send()
-                
+
             except Exception as e:
-                return Response({
-                    "detail": str(e)
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response(
-                {"detail": "E-mail enviado"},
-                status=status.HTTP_201_CREATED
+                {"detail": "E-mail enviado"}, status=status.HTTP_201_CREATED
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -346,7 +353,9 @@ class PasswordResetView(APIView):
         operation_description="Rota para redefinir a senha",
         request_body=PasswordResetSerializer,
         responses={
-            201: openapi.Response(schema=MessageSerializer, description="Senha alterada") 
+            201: openapi.Response(
+                schema=MessageSerializer, description="Senha alterada"
+            )
         },
     )
     def post(self, request):
@@ -382,7 +391,9 @@ class PasswordResetView(APIView):
                 user.set_password(new_password)
                 user.save()
 
-                return Response({"detail": "Senha alterada"},status=status.HTTP_201_CREATED)
+                return Response(
+                    {"detail": "Senha alterada"}, status=status.HTTP_201_CREATED
+                )
 
             except TokenError as e:
                 return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -397,7 +408,11 @@ class RegisterUserView(APIView):
     @swagger_auto_schema(
         operation_description="Rota para registrar o usuário.",
         request_body=RegisterUserSerializer,
-        responses={201: openapi.Response(schema=SendEmailResponseSerializer, description="Usuario criado")},
+        responses={
+            201: openapi.Response(
+                schema=SendEmailResponseSerializer, description="Usuario criado"
+            )
+        },
     )
     def post(self, request):
         serializer = RegisterUserSerializer(data=request.data)
@@ -453,14 +468,14 @@ class RegisterUserView(APIView):
                 username=username,
             )
 
-            Member.objects.create(
-                name=name, cell_phone=cell_phone, user=user
+            Member.objects.create(name=name, cell_phone=cell_phone, user=user)
+
+            return Response(
+                {"detail": "Usuario criado"}, status=status.HTTP_201_CREATED
             )
 
-            return Response({"detail": "Usuario criado"},status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 
 class SendRegistrationEmailView(APIView):
     @swagger_auto_schema(
@@ -468,8 +483,10 @@ class SendRegistrationEmailView(APIView):
         operation_description="Recebe uma lista de e-mails e envia convites personalizados com um link de registro.",
         query_serializer=SendEmailSerializer,
         responses={
-            200: openapi.Response(schema=SendEmailResponseSerializer, description="E-mails enviado")   
-        }
+            200: openapi.Response(
+                schema=SendEmailResponseSerializer, description="E-mails enviado"
+            )
+        },
     )
     def post(self, request):
         serializer = SendEmailSerializer(data=request.data)
@@ -478,14 +495,14 @@ class SendRegistrationEmailView(APIView):
         from_email = getattr(settings, "EMAIL_HOST_USER", None)
         if not from_email:
             return Response(
-                {'detail': 'E-mail host não configurado.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"detail": "E-mail host não configurado."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         success = []
         failed = []
 
-        for email in serializer.validated_data['emails']:
+        for email in serializer.validated_data["emails"]:
             try:
                 # Gerar um token provisório com expiração
                 temporary_access_token = AccessToken()
@@ -498,7 +515,6 @@ class SendRegistrationEmailView(APIView):
                 token = generate_email_token(email)
                 link = f"{settings.FRONTEND_URL}/register?token={token}&temporary_token={temporary_access_token}"
 
-                
                 context = {
                     "subject": "Você foi convidado para participar do nosso site!",
                     "message": """
@@ -515,18 +531,15 @@ class SendRegistrationEmailView(APIView):
                     subject=context["subject"],
                     body=f"Seu e-mail não suporta HTML. Clique no link: {link}",
                     from_email=from_email,
-                    to=[email]
+                    to=[email],
                 )
                 send_email.attach_alternative(html_content, "text/html")
                 send_email.send()
                 success.append(email)
             except Exception as e:
-                failed.append({'email': email, 'detail': str(e)})
+                failed.append({"email": email, "detail": str(e)})
 
-        return Response({
-            "sent": success,
-            "failed": failed
-        }, status=status.HTTP_200_OK)
+        return Response({"sent": success, "failed": failed}, status=status.HTTP_200_OK)
 
 
 class VerifyRegistrationTokenView(APIView):
@@ -538,35 +551,37 @@ class VerifyRegistrationTokenView(APIView):
         operation_description="Verifica se o token recebido por e-mail ainda é válido. Retorna o e-mail original se válido.",
         manual_parameters=[
             openapi.Parameter(
-                'token',
+                "token",
                 openapi.IN_QUERY,
                 description="Token de verificação recebido por e-mail",
                 type=openapi.TYPE_STRING,
-                required=True
+                required=True,
             )
         ],
         responses={
             200: openapi.Response(
-                description="Token válido",
-                schema=TokenVerificationSerializer
+                description="Token válido", schema=TokenVerificationSerializer
             )
-        }
+        },
     )
     def get(self, request):
-        token = request.query_params.get('token')
+        token = request.query_params.get("token")
         if not token:
-            return Response({'detail': 'Token ausente'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Token ausente"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             email = verify_email_token(token)
-            return Response({'valid': True, 'email': email}, status=status.HTTP_200_OK)
+            return Response({"valid": True, "email": email}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'valid': False, 'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"valid": False, "detail": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class MostEscalatedMembers(APIView):
-    
+
     @swagger_auto_schema(
         operation_description="Retorna os 10 membros mais escalados no último ano.",
         responses={
@@ -581,14 +596,16 @@ class MostEscalatedMembers(APIView):
                                 type=openapi.TYPE_OBJECT,
                                 properties={
                                     "name": openapi.Schema(type=openapi.TYPE_STRING),
-                                    "total-member": openapi.Schema(type=openapi.TYPE_INTEGER)
-                                }
-                            )
+                                    "total-member": openapi.Schema(
+                                        type=openapi.TYPE_INTEGER
+                                    ),
+                                },
+                            ),
                         )
-                    }
-                )
+                    },
+                ),
             )
-        }
+        },
     )
     def get(self, request):
         date_now = timezone.now()
@@ -609,7 +626,6 @@ class MostEscalatedMembers(APIView):
 
         member_ids = [item["member"] for item in top_members]
         members = Member.objects.filter(id__in=member_ids)
-        
 
         return Response(
             {
@@ -620,8 +636,7 @@ class MostEscalatedMembers(APIView):
                             item["total"]
                             for item in top_members
                             if item["member"] == member.id
-                        )
-                        
+                        ),
                     }
                     for member in members
                 ]

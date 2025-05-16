@@ -4,15 +4,17 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from rest_framework import authentication, permissions, routers
+from rest_framework import permissions, routers
 
-from apps.accounts.views import (CookieTokenObtainPairView,
-                                 CookieTokenRefreshView,
-                                 MemberFunctionsViewSet, MemberViewSet, 
-                                 UserViewSet)
-from apps.lineup.views import PraiseLineupViewSet, LineupMemberViewSet
-from apps.music.views import (MusicCategoryViewSet, MusicChordViewSet,
-                              MusicViewSet)
+from apps.accounts.views import (
+    CookieTokenObtainPairView,
+    CookieTokenRefreshView,
+    MemberFunctionsViewSet,
+    MemberViewSet,
+    UserViewSet,
+)
+from apps.lineup.views import LineupMemberViewSet, PraiseLineupViewSet
+from apps.music.views import MusicCategoryViewSet, MusicChordViewSet, MusicViewSet
 from apps.playlist.views import PlaylistViewSet
 
 router = routers.DefaultRouter()
@@ -38,7 +40,9 @@ router.register("api/praise/playlist", PlaylistViewSet, basename="Playlist")
 router.register(
     "api/praise/praise-lineup", PraiseLineupViewSet, basename="Escalação do louvor"
 )
-router.register("api/praise/lineup-member", LineupMemberViewSet, basename="Membros escalados")
+router.register(
+    "api/praise/lineup-member", LineupMemberViewSet, basename="Membros escalados"
+)
 
 
 # Documentação
@@ -78,7 +82,3 @@ urlpatterns = [
     ),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# Adicione isso no final do arquivo
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

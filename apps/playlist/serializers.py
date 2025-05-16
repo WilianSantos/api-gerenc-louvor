@@ -5,6 +5,7 @@ from .models import Playlist
 
 class PlaylistSerializers(serializers.ModelSerializer):
     playlist_link_display = serializers.SerializerMethodField()
+
     class Meta:
         model = Playlist
         fields = "__all__"

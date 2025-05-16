@@ -25,5 +25,5 @@ class Playlist(TimeStampedModel):
         return [
             music.music_link
             for music in self.music.all()
-            if hasattr(music, 'music_link') and music.music_link
+            if hasattr(music, "music_link") and music.music_link
         ]

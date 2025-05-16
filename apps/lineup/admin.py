@@ -11,5 +11,12 @@ class PraiseLineupAdmin(admin.ModelAdmin):
 
 @admin.register(LineupMember)
 class LineupMemberAdmin(admin.ModelAdmin):
-    list_display = ("lineup", "member", "function", "created_at", 'get_member_display', 'get_function_display')
+    list_display = (
+        "lineup",
+        "member",
+        "function",
+        "created_at",
+        "get_member_display",
+        "get_function_display",
+    )
     list_filter = ("function", "lineup__lineup_date")

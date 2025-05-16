@@ -24,9 +24,7 @@ class Music(TimeStampedModel):
     music_title = models.CharField(max_length=100, null=False, blank=False)
     author = models.CharField(max_length=100, null=False, blank=False)
     category = models.ManyToManyField(MusicCategory, blank=True)
-    music_tone = models.CharField(
-        max_length=10, blank=False
-    ) 
+    music_tone = models.CharField(max_length=10, blank=False)
     music_chord = models.ManyToManyField(MusicChord, blank=True)
     music_text = HTMLField()
     music_link = models.URLField(max_length=255, blank=True)

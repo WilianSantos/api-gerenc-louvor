@@ -21,7 +21,7 @@ class PraiseLineup(TimeStampedModel):
         return f'{self.lineup_event or "Escala"} | {self.lineup_date}'
 
     def get_playlist_display(self):
-        return self.playlist.playlist_name if self.playlist else ''
+        return self.playlist.playlist_name if self.playlist else ""
 
     def get_playlist_link_display(self):
         if not self.playlist:
@@ -36,7 +36,9 @@ class LineupMember(TimeStampedModel):
     member = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, blank=True)
     member_name_snapshot = models.CharField(max_length=150, blank=True)
 
-    function = models.ForeignKey(MemberFunctions, on_delete=models.SET_NULL, null=True, blank=True)
+    function = models.ForeignKey(
+        MemberFunctions, on_delete=models.SET_NULL, null=True, blank=True
+    )
     function_name_snapshot = models.CharField(max_length=100, blank=True)
 
     class Meta:
@@ -55,12 +57,17 @@ class LineupMember(TimeStampedModel):
         return self.member.name if self.member else self.member_name_snapshot
 
     def get_function_display(self):
-        return self.function.function_name if self.function else self.function_name_snapshot
+        return (
+            self.function.function_name
+            if self.function
+            else self.function_name_snapshot
+        )
 
     def clean(self):
         if not self.member.function.filter(pk=self.function.pk).exists():
-            raise ValidationError(f"{self.member.name} não possui a função '{self.function.function_name}'")
-
+            raise ValidationError(
+                f"{self.member.name} não possui a função '{self.function.function_name}'"
+            )
 
     def __str__(self):
         return (

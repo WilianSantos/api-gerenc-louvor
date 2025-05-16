@@ -212,9 +212,8 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 CORS_ALLOWED_ORIGINS = [
-    "https://nextjs-worship-site.vercel.app",
-    "https://84e6-143-255-126-18.ngrok-free.app",
-    str(os.getenv("FRONTEND_URL")),  # certifique-se que FRONTEND_URL está definido
+    'http://localhost:3000',
+    str(os.getenv("FRONTEND_URL")),
 ]
 
 CORS_ALLOW_CREDENTIALS = True

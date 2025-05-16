@@ -106,14 +106,13 @@ DATABASES = {
     }
 }
 
-# Redis caches
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://localhost:6380/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": os.getenv("PASSWORD_REDIS", ""),
+            "PASSWORD": os.getenv("PASSWORD_REDIS"),
         },
     }
 }

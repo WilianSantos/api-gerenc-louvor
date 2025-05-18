@@ -482,7 +482,7 @@ class SendRegistrationEmailView(APIView):
     @swagger_auto_schema(
         operation_summary="Enviar convites por e-mail",
         operation_description="Recebe uma lista de e-mails e envia convites personalizados com um link de registro.",
-        query_serializer=SendEmailSerializer,
+        request_body=SendEmailSerializer,
         responses={
             200: openapi.Response(
                 schema=SendEmailResponseSerializer, description="E-mails enviado"

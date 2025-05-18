@@ -210,6 +210,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 CORS_ALLOWED_ORIGINS = [
+    'https://ministerio-louvor.vercel.app',
     'http://localhost:3000',
     str(os.getenv("FRONTEND_URL")),
 ]

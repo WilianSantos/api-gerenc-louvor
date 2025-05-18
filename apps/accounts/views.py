@@ -166,8 +166,8 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             response.set_cookie(
                 key="refresh_token",
                 value=refresh,
-                httponly=False,  
-                secure=False,  
+                httponly=True,  
+                secure=True,  
                 samesite="None",  
                 max_age=60 * 60 * 24 * 5,  # 5 dias
                 path="/",  
@@ -215,9 +215,10 @@ class CookieTokenRefreshView(TokenRefreshView):
                 key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=False,
-                samesite="Lax",
+                secure=True,
+                samesite="None",
                 max_age=60 * 10,  # 10 min
+                path="/", 
             )
             return response
         except Exception:

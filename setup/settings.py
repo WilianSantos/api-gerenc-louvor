@@ -17,6 +17,7 @@ from pathlib import Path
 
 from corsheaders.defaults import default_headers, default_methods
 from dotenv import load_dotenv
+import dj_database_url
 
 load_dotenv()
 
@@ -96,20 +97,13 @@ WSGI_APPLICATION = "setup.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("DATABASE_NAME", "praise_management_api"),
-        "USER": os.getenv("DATABASE_USER", "root"),
-        "PASSWORD": os.getenv("PASSWORD_MYSQL", ""),
-        # "HOST": os.getenv('DATABASE_HOST', 'db-praise-api'),  # 'db' é o nome do serviço no docker-compose
-        "PORT": os.getenv("DATABASE_PORT", "3307"),
-    }
+    "default": dj_database_url.parse(f"mysql://root:{str(os.getenv("MYSQLPASSWORD"))}@maglev.proxy.rlwy.net:57638/railway")
 }
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6380/1",
+        "LOCATION": "redis://default:bXXFVAUHrOFYCrjANaQdvqoayuHPnwlu@shinkansen.proxy.rlwy.net:56254",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": os.getenv("PASSWORD_REDIS"),

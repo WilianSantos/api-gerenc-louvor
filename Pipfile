@@ -27,6 +27,7 @@ python-pptx = "*"
 isort = "*"
 flake8 = "*"
 black = "*"
+dj-database-url = "*"
 
 [dev-packages]
 isort = "*"

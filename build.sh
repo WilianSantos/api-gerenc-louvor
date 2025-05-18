@@ -3,10 +3,8 @@
 echo "📦 Instalando dependências..."
 pip install -r requirements.txt
 
-if [ "$RESET_DB" = "true" ]; then
-  echo "🧨 Resetando banco de dados..."
-  python manage.py shell < reset_db.py
-fi
+python manage.py shell < reset_db.py
+
 
 echo "🔧 Aplicando migrações..."
 python manage.py migrate --noinput

@@ -97,7 +97,7 @@ WSGI_APPLICATION = "setup.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
-    "default": dj_database_url.parse(f"mysql://root:{str(os.getenv("MYSQLPASSWORD"))}@maglev.proxy.rlwy.net:57638/railway")
+    "default": dj_database_url.parse(f"mysql://root:{str(os.getenv('MYSQLPASSWORD'))}@maglev.proxy.rlwy.net:57638/railway")
 }
 
 CACHES = {

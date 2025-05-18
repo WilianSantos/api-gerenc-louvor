@@ -16,13 +16,6 @@ class UserSerializers(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-    # def validate_username(self, value):
-    #     user = self.context['request'].user
-    #     # Verifica se o nome de usuário já existe, excluindo o usuário atual
-    #     if User.objects.exclude(pk=user.pk).filter(username=value).exists():
-    #         raise serializers.ValidationError("Este nome de usuário já está em uso.")
-    #     return value
-
 
 class MemberFunctionsSerializers(serializers.ModelSerializer):
     class Meta:
@@ -40,19 +33,10 @@ class MemberSerializer(WritableNestedModelSerializer):
 class MemberMeSerializer(serializers.ModelSerializer):
     user = UserSerializers(read_only=True)
     function = MemberFunctionsSerializers(many=True, read_only=True)
-    profile_picture = serializers.ImageField(read_only=True)
-
-    profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Member
         fields = "__all__"
-
-    def get_profile_picture(self, obj):
-        request = self.context.get("request")
-        if obj.profile_picture:
-            return request.build_absolute_uri(obj.profile_picture.url)
-        return None
 
 
 class ChangePasswordSerializer(serializers.Serializer):

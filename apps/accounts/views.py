@@ -4,9 +4,10 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import EmailMultiAlternatives
-from django.db.models import Count
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.db.models import Count
+from django.core import signing
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -146,8 +147,12 @@ class CookieTokenObtainPairView(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
 
         if response.status_code == 200:
-            access = response.data["access"]
-            refresh = response.data["refresh"]
+
+            encrypted_access = signing.dumps(response.data["access"])
+            access = encrypted_access
+
+            encrypted_refresh = signing.dumps(response.data["refresh"])
+            refresh = encrypted_refresh
 
             response.data = {"detail": "Login realizado com sucesso"}
 
@@ -207,24 +212,36 @@ class CookieTokenRefreshView(TokenRefreshView):
             return Response({"detail": "Refresh token não encontrado"}, status=401)
 
         try:
-            refresh = RefreshToken(refresh_token)
-            access_token = str(refresh.access_token)
+            decrypted_refresh = refresh_token
+            refresh = signing.loads(decrypted_refresh)
 
-            response = Response({"message": "Token renovado"})
-            response.set_cookie(
-                key="access_token",
-                value=access_token,
-                httponly=True,
-                secure=True,
-                samesite="None",
-                max_age=60 * 10,  # 10 min
-                path="/", 
-            )
-            return response
-        except Exception:
+            try:
+                valid_refresh = RefreshToken(refresh)
+
+                encrypted_access = signing.dumps(str(valid_refresh.access_token))
+                access_token = encrypted_access
+
+                response = Response({"message": "Token renovado"})
+                response.set_cookie(
+                    key="access_token",
+                    value=access_token,
+                    httponly=True,
+                    secure=True,
+                    samesite="None",
+                    max_age=60 * 10,  # 10 min
+                    path="/", 
+                )
+                return response
+
+            except Exception:
+                return Response(
+                    {"detail": "Refresh token inválido ou expirado"}, status=401
+                )
+        
+        except signing.BadSignature:
             return Response(
-                {"detail": "Refresh token inválido ou expirado"}, status=401
-            )
+                    {"detail": "Refresh token inválido ou expirado"}, status=401
+                )
 
 
 class ChangePasswordView(APIView):

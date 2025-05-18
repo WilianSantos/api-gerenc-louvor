@@ -28,9 +28,6 @@ class Member(TimeStampedModel):
     name = models.CharField(max_length=150, null=False, blank=False)
     availability = models.BooleanField(default=True)
     cell_phone = models.CharField(max_length=14, blank=True)
-    profile_picture = models.ImageField(
-        upload_to="profile_picture/%Y/%m/%d/", blank=True, null=True
-    )
     function = models.ManyToManyField(MemberFunctions, blank=True)
     user = models.OneToOneField(
         to=User, on_delete=models.CASCADE, blank=False, related_name="user"

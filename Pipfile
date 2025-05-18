@@ -28,6 +28,7 @@ isort = "*"
 flake8 = "*"
 black = "*"
 dj-database-url = "*"
+gunicorn = "*"
 
 [dev-packages]
 isort = "*"

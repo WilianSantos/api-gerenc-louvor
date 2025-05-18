@@ -1,11 +1,13 @@
 #!/bin/bash
 
-echo "🔧 Rodando migrações..."
+echo "📦 Instalando dependências..."
+pip install -r requirements.txt
+
+echo "🔧 Aplicando migrações..."
 python manage.py migrate --noinput
 
 echo "🎒 Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput
 
-# (opcional) criar superusuário automaticamente
-echo "🧙 Criando superusuário..."
+echo "🧙 Criando superusuário se necessário..."
 python manage.py shell < create_superuser.py

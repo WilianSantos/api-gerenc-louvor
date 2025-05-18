@@ -3,8 +3,11 @@
 echo "📦 Instalando dependências..."
 pip install -r requirements.txt
 
+echo "📦 Resetando Banco..."
+python manage.py shell < reset_db.py
+
 echo "🔧 Aplicando migrações..."
-python manage.py migrate --fake-initial --noinput
+python manage.py migrate --noinput
 
 echo "🎒 Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput

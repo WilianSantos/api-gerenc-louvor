@@ -1,28 +1,13 @@
-# reset_db.py
-from django.core.management import call_command
 from django.db import connection
 
-def reset_db():
-    # Desativa verificação de chaves estrangeiras
-    with connection.cursor() as cursor:
-        cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
-    
-    # Obtém lista de tabelas
-    with connection.cursor() as cursor:
-        cursor.execute("SHOW TABLES;")
-        tables = [row[0] for row in cursor.fetchall()]
-    
-    # Remove cada tabela
-    with connection.cursor() as cursor:
-        for table in tables:
-            print(f"Dropping table {table}")
-            cursor.execute(f"DROP TABLE IF EXISTS `{table}`;")
-    
-    # Reativa verificação de chaves estrangeiras
-    with connection.cursor() as cursor:
-        cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
-    
-    print("Database reset complete")
-
-if __name__ == "__main__":
-    reset_db()
+with connection.cursor() as cursor:
+    cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+    cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();")
+    tables = cursor.fetchall()
+    for (table_name,) in tables:
+        try:
+            cursor.execute(f"DROP TABLE IF EXISTS `{table_name}`;")
+            print(f"✅ Tabela `{table_name}` deletada.")
+        except Exception as e:
+            print(f"❌ Erro ao deletar `{table_name}`: {e}")
+    cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")

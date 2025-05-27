@@ -104,7 +104,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://default:bXXFVAUHrOFYCrjANaQdvqoayuHPnwlu@shinkansen.proxy.rlwy.net:56254",
+        "LOCATION": str(os.getenv("REDIS_URL_DEPLOY")),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": os.getenv("PASSWORD_REDIS"),
@@ -187,11 +187,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
-    "AUTH_COOKIE": "access_token",
-    "AUTH_COOKIE_SECURE": True,
-    "AUTH_COOKIE_HTTP_ONLY": True,
-    "AUTH_COOKIE_SAMESITE": "None",
+    "UPDATE_LAST_LOGIN": False
 }
 
 

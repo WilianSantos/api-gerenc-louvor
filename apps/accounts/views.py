@@ -171,14 +171,17 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             response.set_cookie(
                 key="refresh_token",
                 value=refresh,
-                httponly=True,  
-                secure=True,  
+                httponly=True,
+                secure=True,
                 samesite="None",  
                 max_age=60 * 60 * 24 * 5,  # 5 dias
                 path="/",  
             )
 
-            response["Access-Control-Allow-Credentials"] = "true"
+            origin = request.headers.get("Origin")
+            if origin in settings.CORS_ALLOWED_ORIGINS:
+                response["Access-Control-Allow-Origin"] = origin
+                response["Access-Control-Allow-Credentials"] = "true"
 
         return response
 
@@ -202,6 +205,22 @@ class LogoutView(APIView):
         response.delete_cookie("refresh_token", path="/")
 
         return response
+
+
+class AuthView(APIView):
+    @swagger_auto_schema(
+        operation_description="Rota para verificar se o usuário esta logado.",
+        responses={
+            200: openapi.Response(
+                description="Remoção dos cookies concluída", schema=MessageSerializer
+            )
+        },
+    )
+    def post(self, request):
+        return Response(
+            {"detail": "Autenticado"},
+            status=status.HTTP_200_OK,
+        )
 
 
 class CookieTokenRefreshView(TokenRefreshView):

@@ -143,12 +143,6 @@ class MemberMeListView(ListAPIView):
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
 
-    def get_domain_from_origin(self, origin):
-        """Extrai o domínio da origem para configurar o cookie"""
-        if origin:
-            parsed = urlparse(origin)
-            return parsed.netloc
-        return None
     
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -163,7 +157,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             
             # Obtém a origem e domínio
             origin = request.headers.get("Origin")
-            domain = self.get_domain_from_origin(origin)
+            
             
             # Configurações de cookie otimizadas para Safari
             cookie_kwargs = {
@@ -172,9 +166,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 'samesite': 'None',
                 'path': '/',
             }
-            
-            if domain:
-                cookie_kwargs['domain'] = domain
             
             # Define cookie de acesso
             response.set_cookie(

@@ -143,46 +143,63 @@ class MemberMeListView(ListAPIView):
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
 
+    def get_domain_from_origin(self, origin):
+        """Extrai o domínio da origem para configurar o cookie"""
+        if origin:
+            parsed = urlparse(origin)
+            return parsed.netloc
+        return None
+    
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-
+        
         if response.status_code == 200:
-
+            # Criptografa os tokens
             encrypted_access = signing.dumps(response.data["access"])
-            access = encrypted_access
-
             encrypted_refresh = signing.dumps(response.data["refresh"])
-            refresh = encrypted_refresh
-
+            
+            # Remove tokens da resposta JSON
             response.data = {"detail": "Login realizado com sucesso"}
-
-            # Define cookie com o token de acesso
+            
+            # Obtém a origem e domínio
+            origin = request.headers.get("Origin")
+            domain = self.get_domain_from_origin(origin)
+            
+            # Configurações de cookie otimizadas para Safari
+            cookie_kwargs = {
+                'httponly': True,
+                'secure': True,
+                'samesite': 'None',
+                'path': '/',
+            }
+            
+            if domain:
+                cookie_kwargs['domain'] = domain
+            
+            # Define cookie de acesso
             response.set_cookie(
                 key="access_token",
-                value=access,
-                httponly=True,  
-                secure=True,  
-                samesite="None",  
+                value=encrypted_access,
                 max_age=60 * 10,  # 10 minutos
-                path="/",  
+                **cookie_kwargs
             )
-
-            # Define cookie com o refresh token
+            
+            # Define cookie de refresh
             response.set_cookie(
                 key="refresh_token",
-                value=refresh,
-                httponly=True,
-                secure=True,
-                samesite="None",  
+                value=encrypted_refresh,
                 max_age=60 * 60 * 24 * 5,  # 5 dias
-                path="/",  
+                **cookie_kwargs
             )
-
-            origin = request.headers.get("Origin")
+            
+            # Headers CORS explícitos
             if origin in settings.CORS_ALLOWED_ORIGINS:
                 response["Access-Control-Allow-Origin"] = origin
                 response["Access-Control-Allow-Credentials"] = "true"
-
+                response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+                response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-CSRFToken"
+                response["Vary"] = "Origin"
+        
         return response
 
 

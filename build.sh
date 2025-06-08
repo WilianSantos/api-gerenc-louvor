@@ -5,7 +5,6 @@ pip install -r requirements.txt
 
 python manage.py shell < reset_db.py
 
-
 echo "🔧 Aplicando migrações..."
 python manage.py migrate --noinput
 

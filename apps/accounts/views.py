@@ -348,7 +348,7 @@ class RequestPasswordResetView(APIView):
                 reset_token.set_exp(lifetime=timedelta(hours=1))
 
                 token = generate_email_token(email)
-                link = f"{settings.FRONTEND_URL}/login?token={token}&reset_token={reset_token}"
+                link = f"{settings.FRONTEND_URL}/change-password?token={token}&reset_token={reset_token}"
 
                 context = {
                     "subject": "Redefinir senha",
